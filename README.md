@@ -42,7 +42,54 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
 - **Configuración ejemplo** incluida
 - **Validación de credenciales**
 
-## 🚀 Instalación y Configuración
+## 🚀 Instalación y Ejecución (AUTOMÁTICA)
+
+### **Método Rápido (Recomendado)**
+
+#### **Opción 1: PowerShell (Windows)**
+```powershell
+# 1. Clonar el repositorio
+git clone https://github.com/AransDino/flux-pro-dental.git
+cd flux-pro-dental
+
+# 2. Ejecutar script automático
+.\run_app.ps1
+```
+
+#### **Opción 2: Command Prompt (Windows)**
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/AransDino/flux-pro-dental.git
+cd flux-pro-dental
+
+# 2. Ejecutar script automático
+run_app.bat
+```
+
+#### **Opción 3: Doble clic**
+1. Clonar el repositorio
+2. Hacer doble clic en `run_app.bat`
+
+### **¿Qué hace automáticamente el script?**
+✅ **Verifica Python** (te avisa si no está instalado)  
+✅ **Crea entorno virtual** (automático si no existe)  
+✅ **Activa el entorno virtual** (automático)  
+✅ **Instala dependencias** (desde requirements.txt)  
+✅ **Crea config.py** (desde plantilla si no existe)  
+✅ **Inicia Streamlit** (abre en navegador automáticamente)  
+
+### **Primera ejecución - Configurar token:**
+1. El script copiará automáticamente `config.example.py` como `config.py`
+2. **Edita `config.py`** y reemplaza:
+```python
+REPLICATE_API_TOKEN = "tu_token_de_replicate_aqui"
+```
+3. Obtén tu token en: https://replicate.com/account/api-tokens
+4. Reinicia el script
+
+## 🛠️ Instalación Manual (Opcional)
+
+Si prefieres hacer todo manualmente:
 
 ### 1. Clonar el repositorio
 ```bash
@@ -73,13 +120,38 @@ REPLICATE_API_TOKEN = "tu_token_de_replicate_aqui"
 
 ### 5. Ejecutar la aplicación
 ```bash
-# Opción 1: Script automático
-run_app.bat  # Windows
-# run_app.ps1  # PowerShell
+# Recomendado: Scripts automáticos
+.\run_app.ps1  # PowerShell
+run_app.bat    # Command Prompt
 
-# Opción 2: Manual
-streamlit run app.py --server.port=8505
+# Manual (si el entorno virtual ya está activado)
+streamlit run app.py --server.port=8501
 ```
+
+## 🔧 Solución de Problemas
+
+### **Error: "No se reconoce el comando"**
+```powershell
+# En PowerShell, usar:
+.\run_app.ps1
+# En lugar de:
+run_app.ps1
+```
+
+### **Error: "No se puede ejecutar scripts"**
+```powershell
+# Habilitar ejecución de scripts en PowerShell:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### **Error: "Python no encontrado"**
+1. Instala Python desde: https://www.python.org/downloads/
+2. Asegúrate de marcar "Add Python to PATH" durante la instalación
+
+### **Error: "Token no configurado"**
+1. Edita `config.py`
+2. Reemplaza `"tu_token_aqui"` con tu token real de Replicate
+3. Reinicia la aplicación
 
 ## 📋 Uso de la Aplicación
 
@@ -188,16 +260,18 @@ flux-pro-dental/
 ├── 📄 video.py              # Script CLI para videos Seedance  
 ├── 📄 anime.py              # Script CLI para videos anime
 ├── 📄 requirements.txt       # Dependencias Python
-├── 📄 run_app.bat           # Script de inicio Windows
-├── 📄 run_app.ps1           # Script de inicio PowerShell
-├── � HISTORIAL_SPEC.md     # Especificación del sistema de historial
-├── �📁 assets/               # Recursos de la aplicación
-│   └── 🖼️ logo22.jpg        # Logo personalizado
+├── 📄 run_app.bat           # Script de inicio automático (Windows)
+├── 📄 run_app.ps1           # Script de inicio automático (PowerShell)
+├── 📄 HISTORIAL_SPEC.md     # Especificación del sistema de historial
+├── 📄 INICIO_RAPIDO.md      # Guía de inicio rápido y solución de problemas
+├── 📁 assets/               # Recursos de la aplicación
+│   ├── 🖼️ logo.jpg          # Logo alternativo
+│   └── 🖼️ logo22.jpg        # Logo principal
 ├── 📁 historial/            # Sistema unificado de archivos
 │   ├── 📄 history.json      # Historial único con enlaces duales
 │   ├── 🖼️ imagen_*.webp     # Imágenes generadas (descarga local)
 │   └── 🎬 video_*.mp4       # Videos generados (descarga local)
-├── 📁 venv/                 # Entorno virtual Python
+├── 📁 venv/                 # Entorno virtual Python (creado automáticamente)
 └── 📄 .gitignore           # Archivos excluidos de git
 ```
 
