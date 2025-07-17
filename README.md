@@ -1,183 +1,240 @@
-# 🦷 Flux Pro Dental Image Generator
+# 🦷 AI Models Pro Generator
 
-Un generador de imágenes dentales hiperrealistas usando el modelo Flux Pro de Replicate. Este proyecto permite crear ilustraciones 3D de alta calidad para educación dental y presentaciones clínicas.
+**Generador avanzado de imágenes y videos dentales con IA - by Ayoze Benítez**
 
-## 🚀 Características
+Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual especializado en odontología y entretenimiento.
 
-- **Generación de imágenes dentales hiperrealistas** usando Flux Pro
-- **Progreso en tiempo real** con contador de segundos actualizable
-- **Configuración personalizable** de parámetros de generación
-- **Descarga automática** de imágenes generadas
-- **Timeouts configurables** para evitar esperas infinitas
+## ✨ Características Principales
 
-## 🛠️ Instalación
+### 🎯 **Modelos de IA Integrados**
+- **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
 
-### Prerrequisitos
+### 🎛️ **Interfaz Avanzada**
+- **Sidebar dinámico** con parámetros específicos por modelo
+- **Plantillas predefinidas** para cada tipo de contenido
+- **Panel de control** con información en tiempo real
+- **Pestañas organizadas** (Generar / Historial)
 
-- Python 3.7 o superior
-- Cuenta en [Replicate](https://replicate.com/)
-- Token de API de Replicate
+### 📊 **Sistema de Análisis y Estadísticas**
+- **Resumen global** con métricas totales
+- **Análisis de costos** en USD y EUR
+- **Estadísticas detalladas** por generación:
+  - Resolución, megapixeles, pasos de procesamiento
+  - FPS, frames totales, duración
+  - Estimaciones de costo precisas
+- **Información temporal** (fecha, hora, antigüedad)
 
-### Configuración del entorno
+### 💾 **Gestión de Archivos**
+- **Descarga automática** de contenido generado
+- **Almacenamiento local** en carpeta `historial/`
+- **Historial persistente** en formato JSON
+- **Vista previa** integrada para imágenes
+- **Información de archivos** para videos
 
-1. **Clona este repositorio:**
-   ```bash
-   git clone https://github.com/tu-usuario/flux-pro-dental.git
-   cd flux-pro-dental
-   ```
+### 🔐 **Seguridad y Configuración**
+- **Tokens seguros** mediante archivo `config.py`
+- **Configuración ejemplo** incluida
+- **Validación de credenciales**
 
-2. **Crea un entorno virtual:**
-   ```bash
-   python -m venv venv
-   ```
+## 🚀 Instalación y Configuración
 
-3. **Activa el entorno virtual:**
-   
-   **Windows (PowerShell):**
-   ```powershell
-   .\venv\Scripts\Activate.ps1
-   ```
-   
-   **macOS/Linux:**
-   ```bash
-   source venv/bin/activate
-   ```
-
-4. **Instala las dependencias:**
-   ```bash
-   pip install replicate requests
-   ```
-
-## 🔧 Configuración
-
-1. **Obtén tu token de API de Replicate:**
-   - Ve a [Replicate](https://replicate.com/)
-   - Inicia sesión y ve a tu perfil
-   - Copia tu token de API
-
-2. **Configura el token:**
-   
-   **Copia el archivo de configuración:**
-   ```bash
-   cp config.example.py config.py
-   ```
-   
-   **Edita el archivo `config.py` y reemplaza el token:**
-   ```python
-   REPLICATE_API_TOKEN = "tu_token_real_aqui"
-   ```
-
-   **⚠️ Importante:** El archivo `config.py` está en `.gitignore` y no se subirá a GitHub por seguridad.
-
-## 📖 Uso
-
-1. **Ejecuta el script:**
-   ```bash
-   python generate_imagen.py
-   ```
-
-2. **El script te mostrará:**
-   - Hora de inicio del proceso
-   - ID de la predicción
-   - Progreso en tiempo real con contador de segundos
-   - Estado del proceso de generación
-
-3. **La imagen se guardará como:**
-   ```
-   dental_crown.webp
-   ```
-
-## ⚙️ Configuración de parámetros
-
-Puedes modificar los siguientes parámetros en el código:
-
-```python
-input={
-    "steps": 25,              # Pasos de inferencia (calidad vs velocidad)
-    "width": 1024,            # Ancho de la imagen
-    "height": 1024,           # Alto de la imagen
-    "guidance": 3,            # Fuerza del guidance
-    "interval": 2,            # Intervalo de guidance
-    "aspect_ratio": "1:1",    # Relación de aspecto
-    "output_format": "webp",  # Formato de salida
-    "output_quality": 80,     # Calidad de compresión
-    "safety_tolerance": 2,    # Tolerancia de seguridad
-    "prompt_upsampling": False # Mejora del prompt
-}
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/AransDino/flux-pro-dental.git
+cd flux-pro-dental
 ```
 
-## 📝 Personalización del prompt
-
-El prompt actual está optimizado para generar ilustraciones dentales. Puedes modificarlo en la variable `prompt_text`:
-
-```python
-prompt_text = """
-Tu prompt personalizado aquí...
-"""
+### 2. Crear entorno virtual
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 ```
 
-### Ejemplo de prompt incluido:
-- Vista superior del arco dental inferior
-- Múltiples inlays y onlays en molares
-- Tejido gingival anatómicamente correcto
-- Texturas realistas
-- Restauraciones cerámicas detalladas
-- Fondo limpio y neutral
-- Calidad de grado médico
+### 3. Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
 
-## 🔄 Funcionamiento
+### 4. Configurar token de Replicate
+```bash
+# Copiar archivo de configuración
+copy config.example.py config.py
 
-1. **Inicialización**: Se configura el cliente de Replicate y se registra la hora de inicio
-2. **Envío**: Se envía la solicitud de generación con los parámetros especificados
-3. **Monitoreo**: Se muestra el progreso en tiempo real con actualización cada 2 segundos
-4. **Finalización**: Una vez completado, se descarga y guarda la imagen
+# Editar config.py y añadir tu token real
+REPLICATE_API_TOKEN = "tu_token_de_replicate_aqui"
+```
 
-## ⏱️ Tiempos esperados
+### 5. Ejecutar la aplicación
+```bash
+# Opción 1: Script automático
+run_app.bat  # Windows
+# run_app.ps1  # PowerShell
 
-- **Tiempo típico**: 2-5 minutos
-- **Timeout configurado**: 40 minutos
-- **Actualización de estado**: Cada 2 segundos
+# Opción 2: Manual
+streamlit run app.py --server.port=8505
+```
 
-## 🚨 Manejo de errores
+## 📋 Uso de la Aplicación
 
-El script incluye manejo para:
-- Timeouts de conexión
-- Errores de generación
-- Estados cancelados
-- Fallos de descarga
+### 🖼️ **Generación de Imágenes (Flux Pro)**
 
-## 📋 Estados posibles
+**Parámetros disponibles:**
+- **Pasos**: 10-50 (calidad vs velocidad)
+- **Dimensiones**: 512x512 hasta 1280x1280
+- **Guidance**: 1-10 (fuerza de guidance)
+- **Formato**: WebP, JPG, PNG
+- **Calidad**: 60-100%
 
-- `starting` → `waiting response`
-- `processing` → `processing`
-- `succeeded` → ✅ Imagen generada
-- `failed` → ❌ Error en la generación
-- `canceled` → ⚠️ Proceso cancelado
+**Plantillas incluidas:**
+- 🦷 **Dental Clásico**: Ilustraciones 3D hiperrealistas
+- 🔬 **Instrumental Dental**: Fotografía macro de instrumentos
+- 🏥 **Consultorio Moderno**: Interiores de clínicas contemporáneas
+
+### 🎬 **Generación de Videos (Seedance)**
+
+**Parámetros disponibles:**
+- **FPS**: 12, 24, 30
+- **Duración**: 3-10 segundos
+- **Resolución**: 720p, 1080p, 1440p
+- **Relación de aspecto**: 16:9, 9:16, 1:1
+- **Cámara fija**: Opcional
+
+**Plantillas incluidas:**
+- 🌊 **Clínica Oceánica**: Ambientes cinematográficos
+- 🦷 **Procedimiento Dental**: Tomas clínicas profesionales
+
+### 🎭 **Generación de Videos Anime (Pixverse)**
+
+**Parámetros disponibles:**
+- **Estilo**: Anime, Realistic, Cartoon
+- **Calidad**: 540p, 720p, 1080p
+- **Efectos**: Zoom In/Out, Pan Left/Right
+- **Modo de movimiento**: Normal, Slow, Fast
+- **Prompt negativo**: Opcional
+- **Efectos de sonido**: Activable
+
+**Plantillas incluidas:**
+- 🎭 **Escena de Acción**: Batallas épicas
+- 🌸 **Personaje Kawaii**: Estilo cute
+- 🏯 **Paisaje Japonés**: Ambientes tradicionales
+- ⚔️ **Batalla Épica**: Combates dinámicos
+- 🌙 **Noche Mágica**: Magical girls
+
+## 📊 Sistema de Estadísticas
+
+### **Resumen Global**
+- Contador de generaciones por tipo
+- Costo total acumulado en USD/EUR
+- Métricas de uso histórico
+
+### **Análisis Individual**
+- **Imágenes**: Resolución, megapixeles, costo estimado
+- **Videos**: Duración, FPS, frames totales, tamaño de archivo
+- **Temporales**: Fecha, hora, antigüedad
+
+### **Estimaciones de Costo**
+- **Flux Pro**: ~$0.05 por imagen (ajustado por resolución)
+- **Seedance**: ~$0.10 por segundo (ajustado por calidad)
+- **Pixverse**: ~$0.08 por segundo (ajustado por calidad)
+
+## 📁 Estructura del Proyecto
+
+```
+flux-pro-dental/
+├── 📄 app.py                 # Aplicación principal Streamlit
+├── 📄 config.py              # Configuración de tokens (no en git)
+├── 📄 config.example.py      # Plantilla de configuración
+├── 📄 generate_imagen.py     # Script CLI para imágenes
+├── 📄 video.py              # Script CLI para videos Seedance  
+├── 📄 anime.py              # Script CLI para videos anime
+├── 📄 requirements.txt       # Dependencias Python
+├── 📄 run_app.bat           # Script de inicio Windows
+├── 📄 run_app.ps1           # Script de inicio PowerShell
+├── 📁 assets/               # Recursos de la aplicación
+│   └── 🖼️ logo22.jpg        # Logo personalizado
+├── 📁 historial/            # Archivos generados y metadatos
+│   ├── 📄 history.json      # Historial persistente
+│   ├── 🖼️ imagen_*.webp     # Imágenes generadas
+│   └── 🎬 video_*.mp4       # Videos generados
+├── 📁 venv/                 # Entorno virtual Python
+└── 📄 .gitignore           # Archivos excluidos de git
+```
+
+## 🛠️ Scripts Independientes
+
+### **Generación de Imágenes**
+```bash
+python generate_imagen.py
+```
+
+### **Generación de Videos Seedance**
+```bash
+python video.py
+```
+
+### **Generación de Videos Anime**
+```bash
+python anime.py
+```
+
+## 🔧 Tecnologías Utilizadas
+
+- **Frontend**: Streamlit
+- **Backend**: Python 3.10+
+- **IA**: Replicate API
+- **Almacenamiento**: JSON + Sistema de archivos
+- **Estilo**: CSS personalizado
+- **Control de versiones**: Git
+
+## 📦 Dependencias Principales
+
+```
+streamlit>=1.47.0
+replicate>=0.15.0
+requests>=2.31.0
+pathlib>=1.0.1
+```
+
+## 🎨 Características de Diseño
+
+- **Logo personalizado** en sidebar (170px, bordes redondeados)
+- **Tipografía manuscrita** para el nombre del autor
+- **Interfaz responsiva** con layout amplio
+- **Iconos temáticos** para cada función
+- **Colores diferenciados** por tipo de contenido
+- **Sidebar persistente** con todos los controles
+
+## 🔒 Seguridad
+
+- **Tokens externos** no incluidos en el repositorio
+- **Archivo `.gitignore`** configurado correctamente
+- **Validación de configuración** antes de usar la API
+- **Historial local** sin exposición de datos sensibles
+
+## 📈 Métricas de Rendimiento
+
+- **Tiempo de generación**: Variable según modelo y parámetros
+- **Almacenamiento**: Optimizado con límite de 100 elementos en historial
+- **Interfaz**: Respuesta inmediata en controles
+- **Descarga**: Automática con verificación de archivos existentes
 
 ## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Este proyecto está en desarrollo activo. Las mejoras y sugerencias son bienvenidas.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+Proyecto desarrollado por **Ayoze Benítez** para uso educativo y profesional en el ámbito odontológico.
 
-## 🔗 Enlaces útiles
+## 🌐 Enlaces
 
-- [Replicate API Documentation](https://replicate.com/docs)
-- [Flux Pro Model](https://replicate.com/black-forest-labs/flux-pro)
-- [Python Replicate Client](https://github.com/replicate/replicate-python)
-
-## ⚠️ Nota de seguridad
-
-**No subas tu token de API a GitHub.** Considera usar variables de entorno o archivos de configuración locales para manejar credenciales sensibles.
+- **GitHub**: [AransDino/flux-pro-dental](https://github.com/AransDino/flux-pro-dental)
+- **Replicate**: [replicate.com](https://replicate.com)
+- **Streamlit**: [streamlit.io](https://streamlit.io)
 
 ---
 
-**Desarrollado para generar contenido educativo dental de alta calidad** 🦷✨
+**© 2025 Ayoze Benítez - AI Models Pro Generator**

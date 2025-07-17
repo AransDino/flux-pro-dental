@@ -135,6 +135,14 @@ dmypy.json
 *.png
 *.gif
 
+# Generated videos
+*.mp4
+*.avi
+*.mov
+
+# Historial local
+historial/
+
 # IDE files
 .vscode/
 .idea/
