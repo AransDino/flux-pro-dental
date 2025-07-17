@@ -128,16 +128,19 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Generated images
-*.webp
-*.jpg
-*.jpeg
-*.png
-*.gif
+# Generated images (only in historial folder)
+historial/*.webp
+historial/*.jpg
+historial/*.jpeg
+historial/*.png
+historial/*.gif
 
-# Generated videos
-*.mp4
-*.avi
+# Generated videos (only in historial folder)
+historial/*.mp4
+historial/*.avi
+
+# Allow assets folder images
+!assets/*
 *.mov
 
 # Historial local
