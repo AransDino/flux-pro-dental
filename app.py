@@ -380,7 +380,7 @@ with st.sidebar:
         
         col1, col2 = st.columns(2)
         with col1:
-            style = st.selectbox("Estilo", ["anime", "realistic", "cartoon"], index=0)
+            style = st.selectbox("Estilo", ["None", "anime", "3d_animation", "clay", "cyberpunk", "comic"], index=1)
             quality = st.selectbox("Calidad", ["540p", "720p", "1080p"], index=1)
         
         with col2:
@@ -795,35 +795,49 @@ with tab1:
                         elif "SSD-1B" in content_type:
                             st.info(f"⚡ Generando imagen rápida con SSD-1B... Iniciado a las {start_datetime}")
                             
-                            # SSD-1B es muy rápido, no necesita progress bar compleja
+                            # SSD-1B usa replicate.run() que devuelve resultados directamente
                             with st.spinner("🚀 Generando imagen rápida..."):
                                 try:
-                                    prediction = generate_ssd1b(prompt, **params)
-                                    st.code(f"ID de predicción: {prediction.id}")
+                                    output = generate_ssd1b(prompt, **params)
                                     
-                                    # Esperar resultado (debería ser muy rápido)
-                                    timeout = 60  # 1 minuto
-                                    while prediction.status not in ["succeeded", "failed", "canceled"]:
-                                        elapsed = int(time.time() - start_time)
-                                        if elapsed > timeout:
-                                            st.error("⛔ Tiempo de espera excedido")
-                                            break
-                                        time.sleep(1)
-                                        prediction.reload()
-                                    
-                                    if prediction.status == "succeeded":
+                                    # SSD-1B devuelve directamente el resultado
+                                    if output:
                                         st.success("⚡ ¡Imagen generada exitosamente!")
                                         
-                                        if prediction.output:
-                                            image_url = prediction.output[0] if isinstance(prediction.output, list) else prediction.output
+                                        # Manejar diferentes tipos de output
+                                        try:
+                                            if isinstance(output, list):
+                                                # Si es una lista, tomar el primer elemento
+                                                first_output = output[0]
+                                                if hasattr(first_output, 'url'):
+                                                    # Es un objeto FileOutput
+                                                    image_url = first_output.url
+                                                else:
+                                                    # Es una URL directa
+                                                    image_url = str(first_output)
+                                            elif hasattr(output, 'url'):
+                                                # Es un objeto FileOutput directo
+                                                image_url = output.url
+                                            else:
+                                                # Es una URL directa
+                                                image_url = str(output)
+                                            
                                             st.write(f"🔗 **URL de la imagen:** {image_url}")
+                                            st.code(f"Tipo de output: {type(output).__name__}")
                                             
                                             # Descargar y guardar
                                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                                             filename = f"ssd_{timestamp}.jpg"
                                             local_path = download_and_save_file(image_url, filename, "imagen")
                                             
-                                            # Guardar en historial
+                                        except Exception as url_error:
+                                            st.error(f"❌ Error al procesar URL: {str(url_error)}")
+                                            st.code(f"Output recibido: {type(output)} - {str(output)[:200]}")
+                                            image_url = None
+                                            local_path = None
+                                        
+                                        # Guardar en historial solo si tenemos URL válida
+                                        if image_url:
                                             history_item = {
                                                 "tipo": "imagen",
                                                 "fecha": datetime.now().isoformat(),
@@ -832,7 +846,8 @@ with tab1:
                                                 "url": image_url,
                                                 "archivo_local": filename if local_path else None,
                                                 "parametros": params,
-                                                "id_prediccion": prediction.id
+                                                "modelo": "SSD-1B",
+                                                "id_prediccion": "N/A (output directo)"
                                             }
                                             save_to_history(history_item)
                                             
@@ -840,12 +855,20 @@ with tab1:
                                                 st.success(f"💾 Imagen guardada: `{filename}`")
                                             
                                             # Mostrar imagen
-                                            st.image(image_url, caption="Imagen SSD-1B", use_container_width=True)
+                                            try:
+                                                st.image(image_url, caption="Imagen SSD-1B", use_container_width=True)
+                                            except Exception as img_error:
+                                                st.warning(f"⚠️ No se pudo mostrar la imagen: {str(img_error)}")
+                                                st.markdown(f'<a href="{image_url}" target="_blank">🔗 Ver imagen en nueva pestaña</a>', unsafe_allow_html=True)
+                                        else:
+                                            st.error("❌ No se pudo obtener URL de la imagen")
                                     else:
-                                        st.error(f"❌ Error en SSD-1B: {prediction.status}")
+                                        st.error("❌ SSD-1B no devolvió output")
                                 
                                 except Exception as e:
                                     st.error(f"❌ Error con SSD-1B: {str(e)}")
+                                    st.error(f"🔍 Tipo de error: {type(e).__name__}")
+                                    st.code(f"Output recibido: {type(output) if 'output' in locals() else 'No definido'}")
                         
                         elif "Seedance" in content_type:
                             st.info(f"💃 Generando con Seedance... Iniciado a las {start_datetime}")
@@ -910,69 +933,80 @@ with tab1:
                         elif "Pixverse" in content_type:
                             st.info(f"🎬 Generando video con Pixverse... Iniciado a las {start_datetime}")
                             
-                            progress_bar = st.progress(0)
-                            status_text = st.empty()
-                            
-                            try:
-                                prediction = generate_video_pixverse(prompt, **params)
-                                st.code(f"ID de predicción: {prediction.id}")
-                                
-                                timeout = 600  # 10 minutos para video
-                                
-                                while prediction.status not in ["succeeded", "failed", "canceled"]:
-                                    elapsed = int(time.time() - start_time)
-                                    if elapsed > timeout:
-                                        st.error("⛔ Tiempo de espera excedido (10 minutos)")
-                                        break
-                                        
-                                    progress = min(elapsed / 300, 0.95)  # Estimar progreso
-                                    progress_bar.progress(progress)
-                                    status_text.text(f"⏱ [{elapsed}s] Estado: {prediction.status}")
-                                    time.sleep(3)
+                            # Pixverse usa replicate.run() que devuelve resultados directamente
+                            with st.spinner("🎬 Generando video con Pixverse..."):
+                                try:
+                                    output = generate_video_pixverse(prompt, **params)
                                     
-                                    try:
-                                        prediction.reload()
-                                    except Exception as reload_error:
-                                        st.error(f"❌ Error al verificar estado: {str(reload_error)}")
-                                        break
+                                    # Pixverse devuelve directamente el resultado
+                                    if output:
+                                        st.success("🎬 ¡Video generado exitosamente!")
+                                        
+                                        # Manejar diferentes tipos de output
+                                        try:
+                                            if isinstance(output, list):
+                                                # Si es una lista, tomar el primer elemento
+                                                first_output = output[0]
+                                                if hasattr(first_output, 'url'):
+                                                    # Es un objeto FileOutput
+                                                    video_url = first_output.url
+                                                else:
+                                                    # Es una URL directa
+                                                    video_url = str(first_output)
+                                            elif hasattr(output, 'url'):
+                                                # Es un objeto FileOutput directo
+                                                video_url = output.url
+                                            else:
+                                                # Es una URL directa
+                                                video_url = str(output)
+                                            
+                                            st.write(f"🔗 **URL del video:** {video_url}")
+                                            st.code(f"Tipo de output: {type(output).__name__}")
+                                            
+                                            # Descargar video
+                                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                            filename = f"pixverse_{timestamp}.mp4"
+                                            local_path = download_and_save_file(video_url, filename, "video")
+                                            
+                                        except Exception as url_error:
+                                            st.error(f"❌ Error al procesar URL: {str(url_error)}")
+                                            st.code(f"Output recibido: {type(output)} - {str(output)[:200]}")
+                                            video_url = None
+                                            local_path = None
+                                        
+                                        # Guardar en historial solo si tenemos URL válida
+                                        if video_url:
+                                            history_item = {
+                                                "tipo": "video",
+                                                "fecha": datetime.now().isoformat(),
+                                                "prompt": prompt,
+                                                "plantilla": selected_template,
+                                                "url": video_url,
+                                                "archivo_local": filename if local_path else None,
+                                                "parametros": params,
+                                                "modelo": "Pixverse",
+                                                "id_prediccion": "N/A (output directo)"
+                                            }
+                                            save_to_history(history_item)
+                                            
+                                            if local_path:
+                                                st.success(f"💾 Video guardado: `{filename}`")
+                                            
+                                            # Mostrar video
+                                            try:
+                                                st.video(video_url)
+                                            except Exception as video_error:
+                                                st.warning(f"⚠️ No se pudo mostrar el video: {str(video_error)}")
+                                                st.markdown(f'<a href="{video_url}" target="_blank">🔗 Ver video en nueva pestaña</a>', unsafe_allow_html=True)
+                                        else:
+                                            st.error("❌ No se pudo obtener URL del video")
+                                    else:
+                                        st.error("❌ Pixverse no devolvió output")
                                 
-                                progress_bar.progress(1.0)
-                                
-                                if prediction.status == "succeeded":
-                                    st.success("🎬 ¡Video generado exitosamente!")
-                                    
-                                    if prediction.output:
-                                        video_url = prediction.output[0] if isinstance(prediction.output, list) else prediction.output
-                                        st.write(f"🔗 **URL del video:** {video_url}")
-                                        
-                                        # Descargar video
-                                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                        filename = f"pixverse_{timestamp}.mp4"
-                                        local_path = download_and_save_file(video_url, filename, "video")
-                                        
-                                        # Guardar en historial
-                                        history_item = {
-                                            "tipo": "video",
-                                            "fecha": datetime.now().isoformat(),
-                                            "prompt": prompt,
-                                            "plantilla": selected_template,
-                                            "url": video_url,
-                                            "archivo_local": filename if local_path else None,
-                                            "parametros": params,
-                                            "id_prediccion": prediction.id
-                                        }
-                                        save_to_history(history_item)
-                                        
-                                        if local_path:
-                                            st.success(f"💾 Video guardado: `{filename}`")
-                                        
-                                        # Mostrar video
-                                        st.video(video_url)
-                                else:
-                                    st.error(f"❌ Error en Pixverse: {prediction.status}")
-                            
-                            except Exception as e:
-                                st.error(f"❌ Error con Pixverse: {str(e)}")
+                                except Exception as e:
+                                    st.error(f"❌ Error con Pixverse: {str(e)}")
+                                    st.error(f"🔍 Tipo de error: {type(e).__name__}")
+                                    st.code(f"Output recibido: {type(output) if 'output' in locals() else 'No definido'}")
                         
                         elif "VEO 3 Fast" in content_type:
                             st.info(f"🚀 Generando video con VEO 3 Fast... Iniciado a las {start_datetime}")

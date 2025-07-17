@@ -8,5 +8,15 @@
     "total": 2,
     "exitosas": 2,
     "tiempo_promedio": 60.94303357601166
+  },
+  "⚡ Imagen (SSD-1B)": {
+    "total": 6,
+    "exitosas": 0,
+    "tiempo_promedio": 7.098145976662636
+  },
+  "🎭 Video Anime (Pixverse)": {
+    "total": 5,
+    "exitosas": 0,
+    "tiempo_promedio": 40.717461824417114
   }
 }
