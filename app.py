@@ -143,7 +143,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-st.markdown("### Generador de imágenes y videos dentales con IA")
+st.markdown("### Generador de contenido con modelos de IA avanzados")
 
 # Verificar configuración
 token = load_config()
@@ -289,15 +289,19 @@ with tab1:
         # Plantillas predefinidas
         if "Imagen" in content_type:
             templates = {
-                "🦷 Dental Clásico": "A hyper-realistic 3D dental illustration showing a top view of the lower dental arch with multiple inlays and onlays placed in molars. The gum tissue and all surrounding teeth are anatomically accurate with realistic textures. Several premolars and molars have visible ceramic restorations perfectly fitted into prepared cavities — demonstrating different types of indirect dental restorations. High detail on enamel, restoration surfaces, and gum tissue. Clean white or neutral background. Medical-grade rendering, ideal for dental education and clinical presentations.",
-                "🔬 Instrumental Dental": "Close-up macro photography of dental instruments on a sterile stainless steel tray. Gleaming dental mirrors, probes, and scalers arranged precisely. Soft medical lighting creates blue and silver reflections on the polished surfaces. Shallow depth of field with a clean, clinical background.",
-                "🏥 Consultorio Moderno": "Modern dental office interior with sleek orange dental chairs, large windows with natural light, contemporary design elements, clean white surfaces, advanced dental equipment, professional medical atmosphere, architectural photography style.",
+                "🎨 Arte Digital": "A stunning digital artwork featuring vibrant colors and intricate details, masterpiece quality, trending on artstation, highly detailed, 8k resolution, professional digital art, cinematic lighting, beautiful composition.",
+                "📸 Fotografía Realista": "Professional photography, hyperrealistic, award-winning photo, perfect lighting, high resolution, DSLR quality, studio lighting, crisp details, commercial photography style.",
+                "🌈 Estilo Fantástico": "Fantasy art style, magical atmosphere, ethereal lighting, mystical elements, enchanted environment, otherworldly beauty, epic fantasy scene, dramatic composition.",
+                "🤖 Futurista/Sci-Fi": "Futuristic design, cyberpunk aesthetic, neon lights, advanced technology, sleek modern architecture, sci-fi atmosphere, digital art style, high-tech environment.",
+                "� Retrato Artístico": "Professional portrait, artistic lighting, emotional expression, fine art photography, dramatic shadows, captivating eyes, artistic composition, studio quality.",
                 "✨ Personalizado": ""
             }
         elif "Seedance" in content_type:
             templates = {
-                "🌊 Clínica Oceánica": "El sol de la mañana entra en cascada a través de enormes cristaleras con vistas al océano. [Toma en travelling suave a ras de suelo] El reflejo dorado del amanecer se desliza sobre el suelo pulido mientras la cámara sigue las ruedas de un taburete dental que se empuja lentamente hacia un sillón naranja. [Dolly lento hacia arriba] El sillón se ilumina con luz cálida; gotas microscópicas de desinfectante brillan como rocío.",
-                "🦷 Procedimiento Dental": "Close-up cinematic shot of a dental procedure. Slow motion water droplets from dental cleaning equipment. Professional hands working with precision instruments. Dramatic lighting highlighting the medical precision.",
+                "� Amanecer Épico": "Golden hour sunrise over misty mountains, cinematic camera movement, slow dolly shot revealing majestic landscape, warm lighting casting long shadows, peaceful atmosphere, nature documentary style, breathtaking vista.",
+                "🏙️ Ciudad Futurista": "Futuristic cityscape at night, neon lights reflecting on wet streets, slow camera pan across towering skyscrapers, cyberpunk atmosphere, dramatic lighting, urban cinematic scene.",
+                "🌊 Océano Tranquilo": "Serene ocean waves gently rolling onto pristine beach, golden sunset lighting, smooth camera tracking shot along shoreline, peaceful coastal scene, relaxing atmosphere.",
+                "🎬 Escena Cinematográfica": "Professional cinematic shot with dramatic lighting, smooth camera movement, film-quality composition, artistic framing, moody atmosphere, cinematic color grading.",
                 "✨ Personalizado": ""
             }
         else:  # Pixverse Anime
@@ -404,7 +408,7 @@ with tab1:
                                         history_item = {
                                             "tipo": "imagen",
                                             "fecha": datetime.now().isoformat(),
-                                            "prompt": prompt[:100] + "..." if len(prompt) > 100 else prompt,
+                                            "prompt": prompt,  # Guardar prompt completo
                                             "plantilla": selected_template,
                                             "url": image_url,
                                             "archivo_local": filename if local_path else None,
@@ -464,7 +468,7 @@ with tab1:
                                 history_item = {
                                     "tipo": "video_seedance",
                                     "fecha": datetime.now().isoformat(),
-                                    "prompt": prompt[:100] + "..." if len(prompt) > 100 else prompt,
+                                    "prompt": prompt,  # Guardar prompt completo
                                     "plantilla": selected_template,
                                     "url": video_url,
                                     "archivo_local": filename if local_path else None,
@@ -520,7 +524,7 @@ with tab1:
                                 history_item = {
                                     "tipo": "video_anime",
                                     "fecha": datetime.now().isoformat(),
-                                    "prompt": prompt[:100] + "..." if len(prompt) > 100 else prompt,
+                                    "prompt": prompt,  # Guardar prompt completo
                                     "plantilla": selected_template,
                                     "url": video_url,
                                     "archivo_local": filename if local_path else None,
@@ -654,7 +658,7 @@ with tab2:
                 with col1:
                     st.write(f"**Tipo:** {item.get('tipo', 'Desconocido')}")
                     st.write(f"**Prompt completo:**")
-                    st.text_area("", value=item.get('prompt', ''), height=100, key=f"prompt_{i}", disabled=True)
+                    st.text_area("Prompt completo", value=item.get('prompt', ''), height=100, key=f"prompt_{i}", disabled=True, label_visibility="collapsed")
                     st.write(f"**Plantilla:** {item.get('plantilla', 'N/A')}")
                     
                     if item.get('parametros'):
