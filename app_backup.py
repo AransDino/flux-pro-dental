@@ -99,6 +99,7 @@ def load_config():
 # Función para cargar logo en base64
 def get_logo_base64():
     """Cargar el logo y convertirlo a base64 para embebido en HTML"""
+    import base64
     logo_path = Path("assets/logo22.jpg")
     try:
         if logo_path.exists():
@@ -241,6 +242,12 @@ def update_generation_stats(model, time_taken, success):
     # Guardar estadísticas
     with open(stats_file, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
+
+def main():
+    """
+    Función principal de la aplicación
+    """
+    pass  # El código principal ya está en el nivel global
 
 # Título principal
 st.markdown("""
@@ -526,7 +533,7 @@ with tab1:
             }
         elif "Seedance" in content_type:
             templates = {
-                "🌅 Amanecer Épico": "Golden hour sunrise over misty mountains, cinematic camera movement, slow dolly shot revealing majestic landscape, warm lighting casting long shadows, peaceful atmosphere, nature documentary style, breathtaking vista.",
+                "� Amanecer Épico": "Golden hour sunrise over misty mountains, cinematic camera movement, slow dolly shot revealing majestic landscape, warm lighting casting long shadows, peaceful atmosphere, nature documentary style, breathtaking vista.",
                 "🏙️ Ciudad Futurista": "Futuristic cityscape at night, neon lights reflecting on wet streets, slow camera pan across towering skyscrapers, cyberpunk atmosphere, dramatic lighting, urban cinematic scene.",
                 "🌊 Océano Tranquilo": "Serene ocean waves gently rolling onto pristine beach, golden sunset lighting, smooth camera tracking shot along shoreline, peaceful coastal scene, relaxing atmosphere.",
                 "🎬 Escena Cinematográfica": "Professional cinematic shot with dramatic lighting, smooth camera movement, film-quality composition, artistic framing, moody atmosphere, cinematic color grading.",
@@ -662,7 +669,7 @@ with tab1:
                                         history_item = {
                                             "tipo": "imagen",
                                             "fecha": datetime.now().isoformat(),
-                                            "prompt": prompt,
+                                            "prompt": prompt,  # Guardar prompt completo
                                             "plantilla": selected_template,
                                             "url": image_url,
                                             "archivo_local": filename if local_path else None,
@@ -977,62 +984,74 @@ with tab1:
                         elif "VEO 3 Fast" in content_type:
                             st.info(f"🚀 Generando video con VEO 3 Fast... Iniciado a las {start_datetime}")
                             
-                            with st.spinner("🚀 Generando video con VEO 3 Fast..."):
-                                try:
-                                    output = generate_video_veo3(prompt, **params)
-                                    
-                                    # VEO 3 Fast devuelve directamente el resultado
-                                    if output:
-                                        # Manejar el output que puede ser FileOutput o URL directa
-                                        try:
-                                            if hasattr(output, 'url'):
-                                                video_url = output.url
-                                            elif isinstance(output, str):
-                                                video_url = output
-                                            else:
-                                                video_url = str(output)
-                                            
-                                            st.success("🚀 ¡Video VEO 3 Fast generado exitosamente!")
-                                            st.write(f"🔗 **URL del video:** {video_url}")
-                                            
-                                            # Descargar video
-                                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                            filename = f"veo3_{timestamp}.mp4"
-                                            local_path = download_and_save_file(video_url, filename, "video")
-                                            
-                                            # Guardar en historial
-                                            history_item = {
-                                                "tipo": "video",
-                                                "fecha": datetime.now().isoformat(),
-                                                "prompt": prompt,
-                                                "plantilla": selected_template,
-                                                "url": video_url,
-                                                "archivo_local": filename if local_path else None,
-                                                "parametros": params,
-                                                "modelo": "VEO 3 Fast"
-                                            }
-                                            save_to_history(history_item)
-                                            
-                                            if local_path:
-                                                st.success(f"💾 Video guardado: `{filename}`")
-                                            
-                                            # Mostrar video
-                                            st.video(video_url)
-                                            
-                                            # Información técnica
-                                            st.info("📊 **VEO 3 Fast**: Modelo de última generación para generación rápida de videos de alta calidad")
-                                            
-                                        except Exception as output_error:
-                                            st.error(f"❌ Error al procesar output de VEO 3 Fast: {str(output_error)}")
-                                            st.write(f"🔍 **Tipo de output:** {type(output)}")
-                                            st.write(f"🔍 **Output raw:** {output}")
-                                    else:
-                                        st.error("❌ VEO 3 Fast no devolvió output")
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            try:
+                                prediction = generate_video_veo3(prompt, **params)
+                                st.code(f"ID de predicción: {prediction.id}")
+                                
+                                timeout = 600  # 10 minutos para video
+                                
+                                while prediction.status not in ["succeeded", "failed", "canceled"]:
+                                    elapsed = int(time.time() - start_time)
+                                    if elapsed > timeout:
+                                        st.error("⛔ Tiempo de espera excedido (10 minutos)")
+                                        break
                                         
-                                except Exception as e:
-                                    st.error(f"❌ Error con VEO 3 Fast: {str(e)}")
-                                    st.error(f"🔍 Detalles: {type(e).__name__}")
-                                    st.code(traceback.format_exc())
+                                    progress = min(elapsed / 240, 0.95)  # VEO 3 Fast es más rápido
+                                    progress_bar.progress(progress)
+                                    status_text.text(f"⏱ [{elapsed}s] Estado: {prediction.status}")
+                                    time.sleep(3)
+                                    
+                                    try:
+                                        prediction.reload()
+                                    except Exception as reload_error:
+                                        st.error(f"❌ Error al verificar estado: {str(reload_error)}")
+                                        break
+                                
+                                progress_bar.progress(1.0)
+                                
+                                if prediction.status == "succeeded":
+                                    st.success("🚀 ¡Video VEO 3 Fast generado exitosamente!")
+                                    
+                                    if prediction.output:
+                                        video_url = prediction.output
+                                        st.write(f"🔗 **URL del video:** {video_url}")
+                                        
+                                        # Descargar video
+                                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                        filename = f"veo3_{timestamp}.mp4"
+                                        local_path = download_and_save_file(video_url, filename, "video")
+                                        
+                                        # Guardar en historial
+                                        history_item = {
+                                            "tipo": "video",
+                                            "fecha": datetime.now().isoformat(),
+                                            "prompt": prompt,
+                                            "plantilla": selected_template,
+                                            "url": video_url,
+                                            "archivo_local": filename if local_path else None,
+                                            "parametros": params,
+                                            "id_prediccion": prediction.id,
+                                            "modelo": "VEO 3 Fast"
+                                        }
+                                        save_to_history(history_item)
+                                        
+                                        if local_path:
+                                            st.success(f"💾 Video guardado: `{filename}`")
+                                        
+                                        # Mostrar video con información adicional
+                                        st.video(video_url)
+                                        
+                                        # Información técnica
+                                        st.info("📊 **VEO 3 Fast**: Modelo de última generación para generación rápida de videos de alta calidad")
+                                        
+                                else:
+                                    st.error(f"❌ Error en VEO 3 Fast: {prediction.status}")
+                            
+                            except Exception as e:
+                                st.error(f"❌ Error con VEO 3 Fast: {str(e)}")
                         
                         elif "Stickers" in content_type:
                             st.info(f"🏷️ Generando sticker... Iniciado a las {start_datetime}")
@@ -1096,17 +1115,12 @@ with tab1:
                         st.info(f"🕐 **Inicio:** {start_datetime} | **Fin:** {end_datetime}")
                         
                         # Actualizar estadísticas globales
-                        # Para VEO 3 Fast, asumimos éxito si llegamos aquí sin excepción
-                        if "VEO 3 Fast" in content_type:
-                            success = True  # Si llegamos aquí, fue exitoso
-                        else:
-                            success = hasattr(locals(), 'prediction') and prediction.status == "succeeded"
-                        
-                        update_generation_stats(content_type, total_time, success)
+                        update_generation_stats(content_type, total_time, prediction.status == "succeeded")
 
                     except Exception as e:
                         st.error(f"❌ Error durante la generación: {str(e)}")
                         st.error(f"🔍 Detalles del error: {type(e).__name__}")
+                        import traceback
                         st.code(traceback.format_exc())
 
         # Información adicional en la barra lateral
@@ -1138,303 +1152,79 @@ with tab1:
             st.markdown("[🎬 Documentación Pixverse](https://replicate.com/pixverse/pixverse-v1.8)")
             st.markdown("[🚀 Documentación VEO 3 Fast](https://replicate.com/fofr/veo-3-fast)")
             st.markdown("[🏷️ Documentación Stickers](https://replicate.com/fofr/sticker-maker)")
-
-# Sección de historial avanzado
-with tab2:
-    st.header("� Historial de Generaciones")
-    
-    history = load_history()
-    
-    if history:
-        # Calcular estadísticas generales
-        total_items = len(history)
-        total_imagenes = len([h for h in history if h.get('tipo') == 'imagen'])
-        total_videos_seedance = len([h for h in history if h.get('tipo') == 'video' and 'seedance' in h.get('archivo_local', '').lower()])
-        total_videos_anime = len([h for h in history if h.get('tipo') == 'video' and 'pixverse' in h.get('archivo_local', '').lower()])
-        total_videos_veo = len([h for h in history if h.get('tipo') == 'video' and 'veo3' in h.get('archivo_local', '').lower()])
-        total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
         
-        # Calcular costos estimados (precios aproximados por generación)
-        cost_per_item = {
-            'imagen': 0.052,  # USD por imagen Flux Pro
-            'video': 0.15,    # USD por video
-            'sticker': 0.052  # USD por sticker
-        }
-        
-        total_cost_usd = 0
-        for item in history:
-            item_type = item.get('tipo', 'imagen')
-            if item_type in cost_per_item:
-                total_cost_usd += cost_per_item[item_type]
-        
-        total_cost_eur = total_cost_usd * 0.92  # Conversión aproximada
-        
-        # Mostrar métricas de resumen
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with col1:
-            st.metric(
-                label="🖼️ Imágenes",
-                value=total_imagenes
-            )
-        
-        with col2:
-            st.metric(
-                label="🎬 Videos Seedance", 
-                value=total_videos_seedance
-            )
-        
-        with col3:
-            st.metric(
-                label="🎭 Videos Anime",
-                value=total_videos_anime
-            )
-        
-        with col4:
-            st.metric(
-                label="💰 Costo Total (USD)",
-                value=f"${total_cost_usd:.2f}"
-            )
-        
-        with col5:
-            st.metric(
-                label="💶 Costo Total (EUR)",
-                value=f"€{total_cost_eur:.2f}"
-            )
-        
-        st.divider()
-        
-        # Filtros avanzados
-        st.subheader("🔍 Filtros")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            filter_type = st.selectbox(
-                "Filtrar por tipo:",
-                ["Todos", "imagen", "video", "sticker", "media"]
-            )
-        
-        with col2:
-            search_prompt = st.text_input(
-                "Buscar en prompts:",
-                placeholder="Escribe palabras clave..."
-            )
-        
-        with col3:
-            show_count = st.selectbox(
-                "Total de generaciones",
-                [10, 20, 50, 100, "Todos"],
-                index=1
-            )
-        
-        # Aplicar filtros
-        filtered_history = history.copy()
-        
-        # Filtro por tipo
-        if filter_type != "Todos":
-            filtered_history = [item for item in filtered_history if item.get("tipo") == filter_type]
-        
-        # Filtro por búsqueda en prompt
-        if search_prompt:
-            search_terms = search_prompt.lower().split()
-            filtered_history = [
-                item for item in filtered_history 
-                if any(term in item.get('prompt', '').lower() for term in search_terms)
-            ]
-        
-        # Ordenar por fecha (más reciente primero)
-        filtered_history.sort(key=lambda x: x.get("fecha", ""), reverse=True)
-        
-        # Limitar cantidad si no es "Todos"
-        if show_count != "Todos":
-            filtered_history = filtered_history[:show_count]
-        
-        st.subheader(f"📋 Resultados ({len(filtered_history)} elementos)")
-        
-        # Mostrar elementos del historial con diseño avanzado
-        for i, item in enumerate(filtered_history):
-            # Obtener información del elemento
-            fecha = item.get('fecha', 'Sin fecha')
-            prompt = item.get('prompt', 'Sin prompt')
-            plantilla = item.get('plantilla', 'Sin plantilla')
-            tipo = item.get('tipo', 'Unknown').title()
-            url = item.get('url', '')
-            archivo_local = item.get('archivo_local', '')
-            parametros = item.get('parametros', {})
-            id_prediccion = item.get('id_prediccion', '')
-            modelo = item.get('modelo', '')
+        # Sección de historial
+        with tab2:
+            st.header("📚 Historial de Generaciones")
             
-            # Asignar icono según el tipo y modelo
-            if tipo.lower() == 'imagen':
-                if 'kandinsky' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎨"
-                elif 'ssd' in archivo_local.lower() if archivo_local else False:
-                    icon = "⚡"
-                else:
-                    icon = "🖼️"  # Flux Pro por defecto
-            elif tipo.lower() == 'video':
-                if 'seedance' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎬"
-                elif 'pixverse' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎭"
-                elif modelo == "VEO 3 Fast" or 'veo3' in archivo_local.lower() if archivo_local else False:
-                    icon = "🚀"
-                else:
-                    icon = "📹"  # Video genérico
-            elif tipo.lower() == 'sticker':
-                icon = "🏷️"
-            elif tipo.lower() == 'media':
-                icon = "📄"
+            history = load_history()
+            
+            if history:
+                    # Opciones de filtrado
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        filter_type = st.selectbox("Filtrar por tipo:", ["Todos", "imagen", "video", "sticker", "media"])
+                    with col2:
+                        filter_date = st.date_input("Filtrar por fecha:", value=None)
+                    with col3:
+                        show_count = st.slider("Mostrar últimos:", 5, 50, 20)
+                    
+                    # Aplicar filtros
+                    filtered_history = history.copy()
+                    
+                    if filter_type != "Todos":
+                        filtered_history = [item for item in filtered_history if item.get("tipo") == filter_type]
+                    
+                    if filter_date:
+                        filter_date_str = filter_date.strftime('%Y-%m-%d')
+                        filtered_history = [item for item in filtered_history if item.get("fecha", "").startswith(filter_date_str)]
+                    
+                    # Ordenar por fecha (más reciente primero)
+                    filtered_history.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+                    
+                    # Mostrar elementos del historial
+                    for i, item in enumerate(filtered_history[:show_count]):
+                        with st.expander(f"{i+1}. {item.get('tipo', 'Unknown').title()} - {item.get('fecha', 'Sin fecha')[:16]}"):
+                            col1, col2 = st.columns([2, 1])
+                            
+                            with col1:
+                                st.write(f"**Prompt:** {item.get('prompt', 'Sin prompt')}")
+                                st.write(f"**Plantilla:** {item.get('plantilla', 'Sin plantilla')}")
+                                if item.get('url'):
+                                    st.write(f"**URL:** {item['url']}")
+                                if item.get('archivo_local'):
+                                    st.write(f"**Archivo local:** `{item['archivo_local']}`")
+                                if item.get('id_prediccion'):
+                                    st.code(f"ID: {item['id_prediccion']}")
+                            
+                            with col2:
+                                # Mostrar preview si es posible
+                                if item.get('url'):
+                                    try:
+                                        if item.get('tipo') in ['imagen', 'sticker']:
+                                            st.image(item['url'], width=150)
+                                        elif item.get('tipo') in ['video']:
+                                            st.video(item['url'])
+                                    except:
+                                        st.write("🖼️ Preview no disponible")
+                                
+                                # Botón para abrir en nueva pestaña
+                                if item.get('url'):
+                                    st.markdown(f"""
+                                    <a href="{item['url']}" target="_blank">
+                                        <button style="
+                                            background-color: #007bff;
+                                            color: white;
+                                            padding: 5px 10px;
+                                            border: none;
+                                            border-radius: 3px;
+                                            cursor: pointer;
+                                            font-size: 12px;
+                                        ">🔗 Abrir</button>
+                                    </a>
+                                    """, unsafe_allow_html=True)
             else:
-                icon = "📄"  # Por defecto
-            
-            # Crear expandible con información resumida
-            fecha_formatted = fecha[:16] if len(fecha) > 16 else fecha
-            prompt_preview = prompt[:50] + "..." if len(prompt) > 50 else prompt
-            
-            with st.expander(f"{icon} {fecha_formatted} - {prompt_preview}", expanded=False):
-                col1, col2 = st.columns([2, 1])
-                
-                with col1:
-                    # Información básica
-                    st.write(f"**Tipo:** {tipo}")
-                    
-                    # Prompt completo en área expandible
-                    with st.expander("📝 Prompt completo", expanded=False):
-                        st.text_area("", value=prompt, height=100, disabled=True, key=f"prompt_{i}")
-                    
-                    st.write(f"**Plantilla:** {plantilla}")
-                    
-                    # Parámetros técnicos
-                    if parametros:
-                        with st.expander("⚙️ Ver parámetros", expanded=False):
-                            for key, value in parametros.items():
-                                st.write(f"**{key}:** {value}")
-                    
-                    # Estadísticas y costos
-                    with st.expander("📊 Estadísticas y Costos", expanded=False):
-                        item_cost = cost_per_item.get(item.get('tipo', 'imagen'), 0)
-                        
-                        col_stats1, col_stats2 = st.columns(2)
-                        with col_stats1:
-                            if 'width' in parametros and 'height' in parametros:
-                                resolution = f"{parametros['width']}x{parametros['height']}"
-                                megapixels = (parametros['width'] * parametros['height']) / 1_000_000
-                                st.write(f"🔍 **Resolución:** {resolution}")
-                                st.write(f"🔢 **Megapíxeles:** {megapixels:.2f} MP")
-                            
-                            if 'steps' in parametros:
-                                st.write(f"⚙️ **Pasos de procesamiento:** {parametros['steps']}")
-                            elif 'num_inference_steps' in parametros:
-                                st.write(f"⚙️ **Pasos de procesamiento:** {parametros['num_inference_steps']}")
-                        
-                        with col_stats2:
-                            st.write(f"💰 **Costo estimado:** ${item_cost:.3f}")
-                            st.write(f"💶 **Costo en EUR:** €{item_cost * 0.92:.3f}")
-                            
-                            if 'aspect_ratio' in parametros:
-                                st.write(f"📐 **Relación de aspecto:** {parametros['aspect_ratio']}")
-                    
-                    # Información técnica
-                    col_tech1, col_tech2 = st.columns(2)
-                    with col_tech1:
-                        st.write(f"📅 **Fecha de creación:** {fecha[:10]}")
-                        st.write(f"🕐 **Hora de creación:** {fecha[11:19] if len(fecha) > 11 else 'N/A'}")
-                    
-                    with col_tech2:
-                        if fecha:
-                            try:
-                                fecha_obj = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
-                                ahora = datetime.now()
-                                diferencia = ahora - fecha_obj.replace(tzinfo=None)
-                                
-                                if diferencia.days > 0:
-                                    antiguedad = f"{diferencia.days} días"
-                                elif diferencia.seconds > 3600:
-                                    antiguedad = f"{diferencia.seconds // 3600} horas"
-                                else:
-                                    antiguedad = f"{diferencia.seconds // 60} minutos"
-                                
-                                st.write(f"⏰ **Antigüedad:** {antiguedad}")
-                            except:
-                                st.write(f"⏰ **Antigüedad:** No calculable")
-                    
-                    if id_prediccion:
-                        st.code(f"🆔 ID de predicción: {id_prediccion}")
-                
-                with col2:
-                    # Preview y botones de acción
-                    if url:
-                        try:
-                            if tipo.lower() in ['imagen', 'sticker']:
-                                st.image(url, caption="Preview", use_container_width=True)
-                            elif tipo.lower() == 'video':
-                                st.video(url)
-                        except Exception as e:
-                            st.warning("🖼️ Preview no disponible")
-                            st.caption(f"Error: {str(e)[:50]}...")
-                    
-                    # Botones de acción con colores llamativos
-                    if url:
-                        st.markdown(f"""
-                        <div style="margin: 10px 0;">
-                            <a href="{url}" target="_blank" style="text-decoration: none;">
-                                <button style="
-                                    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-                                    color: white;
-                                    padding: 12px 20px;
-                                    border: none;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    font-size: 14px;
-                                    font-weight: bold;
-                                    width: 100%;
-                                    margin-bottom: 8px;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                                    transition: all 0.3s ease;
-                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                    🔗 Ver Online (Replicate)
-                                </button>
-                            </a>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    if archivo_local:
-                        local_path = HISTORY_DIR / archivo_local
-                        if local_path.exists():
-                            st.markdown(f"""
-                            <div style="margin: 10px 0;">
-                                <button style="
-                                    background: linear-gradient(45deg, #4dabf7, #74c0fc);
-                                    color: white;
-                                    padding: 12px 20px;
-                                    border: none;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    font-size: 14px;
-                                    font-weight: bold;
-                                    width: 100%;
-                                    margin-bottom: 8px;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                                ">
-                                    � Ver Local
-                                </button>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            
-                            st.success("🟢 Archivo disponible localmente")
-                        else:
-                            st.error("🔴 Archivo local no encontrado")
-                    
-                    # Información del archivo
-                    if archivo_local:
-                        st.caption(f"� **Archivo:** {archivo_local}")
-                
-                st.divider()
-        
-        # Información adicional
-        if filtered_history:
-            st.info(f"📈 **Total mostrado:** {len(filtered_history)} de {total_items} generaciones")
-        
-    else:
-        st.info("�📝 No hay elementos en el historial aún. ¡Genera tu primer contenido!")
+                st.info("📝 No hay elementos en el historial aún.")
+
+if __name__ == "__main__":
+    main()
