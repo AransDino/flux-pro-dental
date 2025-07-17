@@ -37,16 +37,31 @@ def load_history():
 def save_to_history(item):
     """Guardar item al historial"""
     try:
+        # Limpiar cualquier objeto no serializable del item
+        clean_item = {}
+        for key, value in item.items():
+            try:
+                # Intentar serializar cada valor individualmente
+                json.dumps(value)
+                clean_item[key] = value
+            except (TypeError, ValueError):
+                # Si no se puede serializar, convertir a string
+                clean_item[key] = str(value)
+        
         history = load_history()
-        history.insert(0, item)  # Añadir al principio
+        history.insert(0, clean_item)  # Añadir al principio
         
         # Mantener solo los últimos 100 elementos
         history = history[:100]
         
         with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
             json.dump(history, f, ensure_ascii=False, indent=2)
+            
     except Exception as e:
         st.error(f"Error al guardar historial: {str(e)}")
+        # Debug: mostrar más información sobre el error
+        st.error(f"Tipo de error: {type(e).__name__}")
+        st.error(f"Item que causó el error: {str(item)[:200]}...")
 
 def download_and_save_file(url, filename, file_type):
     """Descargar archivo y guardarlo localmente"""
@@ -456,7 +471,15 @@ with tab1:
                             
                             if output:
                                 st.success("✅ ¡Video generado exitosamente!")
-                                video_url = output
+                                
+                                # Convertir output a string URL si es un objeto FileOutput
+                                if hasattr(output, 'url'):
+                                    video_url = output.url
+                                elif isinstance(output, str):
+                                    video_url = output
+                                else:
+                                    video_url = str(output)
+                                
                                 st.write(f"🔗 **URL del video:** {video_url}")
                                 
                                 # Descargar y guardar localmente
@@ -512,7 +535,15 @@ with tab1:
                             
                             if output:
                                 st.success("✅ ¡Video anime generado exitosamente!")
-                                video_url = output
+                                
+                                # Convertir output a string URL si es un objeto FileOutput
+                                if hasattr(output, 'url'):
+                                    video_url = output.url
+                                elif isinstance(output, str):
+                                    video_url = output
+                                else:
+                                    video_url = str(output)
+                                
                                 st.write(f"🔗 **URL del video:** {video_url}")
                                 
                                 # Descargar y guardar localmente
