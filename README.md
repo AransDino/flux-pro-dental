@@ -8,8 +8,12 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
 
 ### 🎯 **Modelos de IA Integrados**
 - **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **� Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
+- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
+- **�🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
 - **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+- **🏷️ Stickers**: Pegatinas y diseños vectoriales
 
 ### 🎛️ **Interfaz Avanzada**
 - **Sidebar dinámico** con parámetros específicos por modelo
@@ -246,8 +250,12 @@ La aplicación implementa un sistema robusto de doble acceso a los archivos gene
 
 ### **Estimaciones de Costo**
 - **Flux Pro**: ~$0.05 por imagen (ajustado por resolución)
+- **Kandinsky 2.2**: ~$0.05 por imagen (con seguimiento de progreso)
+- **SSD-1B**: ~$0.03 por imagen (generación rápida)
 - **Seedance**: ~$0.10 por segundo (ajustado por calidad)
 - **Pixverse**: ~$0.08 por segundo (ajustado por calidad)
+- **VEO 3 Fast**: ~$0.12 por segundo (calidad cinematográfica de Google)
+- **Stickers**: ~$0.02 por sticker
 
 ## 📁 Estructura del Proyecto
 
@@ -332,6 +340,28 @@ pathlib>=1.0.1
 - **Almacenamiento**: Optimizado con límite de 100 elementos en historial
 - **Interfaz**: Respuesta inmediata en controles
 - **Descarga**: Automática con verificación de archivos existentes
+
+## 🚀 Nuevo: VEO 3 Fast de Google
+
+### **Características Especiales**
+- **Modelo de Google**: Tecnología de vanguardia en generación de video
+- **Calidad cinematográfica**: Videos de alta calidad con realismo excepcional
+- **Mejora automática de prompts**: La IA optimiza automáticamente tus descripciones
+- **Duración flexible**: Videos de 2 a 8 segundos
+- **Múltiples relaciones de aspecto**: 16:9, 9:16, 1:1
+
+### **Parámetros Avanzados**
+- **Calidad**: Standard y High
+- **Movimiento de cámara**: Estático, paneo, zoom, dolly
+- **Intensidad de movimiento**: Control granular de 0.1 a 1.0
+- **Enhance prompt**: Mejora automática del texto de entrada
+
+### **Plantillas Predefinidas**
+- 🏃 **Acción Épica**: Superhéroes y escenas dinámicas
+- 🌊 **Naturaleza Cinematográfica**: Paisajes y elementos naturales
+- 🚗 **Persecución Urbana**: Escenas de acción en ciudad
+- 🦋 **Transformación Mágica**: Procesos naturales en cámara lenta
+- 🎭 **Drama Emocional**: Momentos íntimos y expresivos
 
 ## 🤝 Contribuciones
 

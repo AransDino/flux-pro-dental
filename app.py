@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 import tempfile
 import json
+import base64
 
 # Configurar la página
 st.set_page_config(
@@ -144,6 +145,67 @@ def generate_video_pixverse(prompt, **params):
     )
     return output
 
+# Función para generar stickers
+def generate_sticker(prompt, **params):
+    # Modificar el prompt para que sea más específico para stickers
+    sticker_prompt = f"sticker design, {prompt}, clean background, cartoon style, simple design, bright colors, outlined, digital art"
+    
+    output = replicate.run(
+        "black-forest-labs/flux-pro",
+        input={
+            "prompt": sticker_prompt,
+            "width": 1024,
+            "height": 1024,
+            "num_outputs": 1,
+            "guidance_scale": 7.5,
+            "num_inference_steps": 50,
+            "safety_tolerance": 2
+        }
+    )
+    return output
+
+# Función para generar imágenes con Kandinsky 2.2
+def generate_kandinsky(prompt, **params):
+    client = replicate.Client()
+    
+    prediction = client.predictions.create(
+        version="ai-forever/kandinsky-2.2:ad9d7879fbffa2874e1d909d1d37d9bc682889cc65b31f7bb00d2362619f194a",
+        input={
+            "prompt": prompt,
+            **params
+        }
+    )
+    
+    return prediction
+
+# Función para generar con SSD-1B (LucaTaco)
+def generate_ssd1b(prompt, **params):
+    """
+    Genera imágenes usando el modelo SSD-1B de lucataco
+    """
+    output = replicate.run(
+        "lucataco/ssd-1b:b19e3639452c59ce8295b82aba70a231404cb062f2eb580ea894b31e8ce5bbb6",
+        input={
+            "prompt": prompt,
+            **params
+        }
+    )
+    return output
+
+# Función para generar video con VEO 3 Fast
+def generate_video_veo3(prompt, **params):
+    """
+    Genera videos usando el modelo VEO 3 Fast de Google
+    """
+    output = replicate.run(
+        "google/veo-3-fast",
+        input={
+            "prompt": prompt,
+            **params
+        }
+    )
+    return output
+
 # Título principal
 st.markdown("""
 <div style="text-align: left;">
@@ -190,15 +252,15 @@ with st.sidebar:
     # Selector de tipo de contenido
     content_type = st.selectbox(
         "🎯 Tipo de contenido:",
-        ["🖼️ Imagen (Flux Pro)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)"],
+        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)", "🏷️ Sticker (Flux Pro)"],
         help="Selecciona el tipo de contenido que quieres generar"
     )
     
     st.divider()
     
     # Configuración según el tipo
-    if "Imagen" in content_type:
-        st.subheader("📸 Parámetros de Imagen")
+    if "Flux Pro" in content_type:
+        st.subheader("📸 Parámetros de Imagen (Flux Pro)")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -232,6 +294,29 @@ with st.sidebar:
             "prompt_upsampling": prompt_upsampling
         }
     
+    elif "Kandinsky" in content_type:
+        st.subheader("🎨 Parámetros de Imagen (Kandinsky 2.2)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            width = st.selectbox("Ancho", [512, 768, 1024, 1280], index=2)
+            num_inference_steps = st.slider("Pasos de inferencia", min_value=10, max_value=100, value=75, help="Más pasos = mejor calidad")
+        
+        with col2:
+            height = st.selectbox("Alto", [512, 768, 1024, 1280], index=2)
+            num_inference_steps_prior = st.slider("Pasos prior", min_value=10, max_value=50, value=25, help="Pasos del modelo prior")
+        
+        output_format = st.selectbox("Formato de salida", ["webp", "png", "jpg"], index=0)
+        
+        params = {
+            "width": width,
+            "height": height,
+            "num_outputs": 1,
+            "output_format": output_format,
+            "num_inference_steps": num_inference_steps,
+            "num_inference_steps_prior": num_inference_steps_prior
+        }
+    
     elif "Seedance" in content_type:  # Video Seedance
         st.subheader("🎬 Parámetros de Video (Seedance)")
         
@@ -254,7 +339,7 @@ with st.sidebar:
             "camera_fixed": camera_fixed
         }
     
-    else:  # Video Anime Pixverse
+    elif "Pixverse" in content_type:  # Video Anime Pixverse
         st.subheader("🎭 Parámetros de Video Anime (Pixverse)")
         
         col1, col2 = st.columns(2)
@@ -287,6 +372,89 @@ with st.sidebar:
             "negative_prompt": negative_prompt,
             "sound_effect_switch": sound_effect_switch
         }
+    
+    elif "SSD-1B" in content_type:
+        st.subheader("⚡ Parámetros de Imagen (SSD-1B)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            width = st.selectbox("Ancho", [512, 768, 1024, 1280], index=1)  # Default 768
+            seed = st.number_input("Seed", min_value=0, max_value=999999999999, value=36446545872, help="Semilla para reproducibilidad")
+            scheduler = st.selectbox("Scheduler", ["K_EULER", "DPMSolverMultistep", "HeunDiscrete", "DDIM"], index=0)
+        
+        with col2:
+            height = st.selectbox("Alto", [512, 768, 1024, 1280], index=1)  # Default 768
+            guidance_scale = st.slider("Guidance Scale", min_value=1, max_value=20, value=9, help="Fuerza del guidance")
+            num_inference_steps = st.slider("Pasos de inferencia", min_value=10, max_value=50, value=25, help="Más pasos = mejor calidad")
+        
+        col3, col4 = st.columns(2)
+        with col3:
+            lora_scale = st.slider("LoRA Scale", min_value=0.0, max_value=1.0, value=0.6, step=0.1, help="Intensidad del LoRA")
+            prompt_strength = st.slider("Prompt Strength", min_value=0.0, max_value=1.0, value=0.8, step=0.1, help="Fuerza del prompt")
+        
+        with col4:
+            apply_watermark = st.checkbox("Aplicar marca de agua", value=True)
+            batched_prompt = st.checkbox("Prompt por lotes", value=False)
+        
+        # Prompt negativo
+        negative_prompt = st.text_area("Prompt negativo (opcional):", 
+                                     value="scary, cartoon, painting", 
+                                     height=60,
+                                     help="Elementos que NO quieres en la imagen")
+        
+        params = {
+            "seed": seed,
+            "width": width,
+            "height": height,
+            "scheduler": scheduler,
+            "lora_scale": lora_scale,
+            "num_outputs": 1,
+            "batched_prompt": batched_prompt,
+            "guidance_scale": guidance_scale,
+            "apply_watermark": apply_watermark,
+            "negative_prompt": negative_prompt,
+            "prompt_strength": prompt_strength,
+            "num_inference_steps": num_inference_steps
+        }
+        
+    elif "VEO 3 Fast" in content_type:  # Video VEO 3 Fast
+        st.subheader("🚀 Parámetros de Video (VEO 3 Fast)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            duration = st.slider("Duración (seg)", min_value=2, max_value=8, value=5, help="Duración del video")
+            aspect_ratio = st.selectbox("Relación de aspecto", ["16:9", "9:16", "1:1"], index=0)
+        
+        with col2:
+            enhance_prompt = st.checkbox("Mejorar prompt automáticamente", value=True, help="VEO 3 Fast mejorará automáticamente tu prompt")
+            quality = st.selectbox("Calidad", ["standard", "high"], index=1)
+        
+        # Configuraciones avanzadas
+        with st.expander("🔧 Configuraciones avanzadas"):
+            camera_motion = st.selectbox("Movimiento de cámara", ["static", "pan", "zoom", "dolly"], index=0)
+            motion_intensity = st.slider("Intensidad de movimiento", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
+        
+        params = {
+            "duration": duration,
+            "aspect_ratio": aspect_ratio,
+            "enhance_prompt": enhance_prompt,
+            "quality": quality,
+            "camera_motion": camera_motion,
+            "motion_intensity": motion_intensity
+        }
+        
+    else:  # Stickers Flux Pro
+        st.subheader("📎 Parámetros de Sticker")
+        
+        # Parámetros fijos para stickers
+        params = {
+            "width": 1024,
+            "height": 1024,
+            "num_outputs": 1,
+            "guidance_scale": 7.5,
+            "num_inference_steps": 50,
+            "safety_tolerance": 2
+        }
 
 # Pestañas principales
 tab1, tab2 = st.tabs(["🚀 Generar", "📂 Historial"])
@@ -302,13 +470,22 @@ with tab1:
         st.header("📝 Prompt")
         
         # Plantillas predefinidas
-        if "Imagen" in content_type:
+        if "Flux Pro" in content_type:
             templates = {
                 "🎨 Arte Digital": "A stunning digital artwork featuring vibrant colors and intricate details, masterpiece quality, trending on artstation, highly detailed, 8k resolution, professional digital art, cinematic lighting, beautiful composition.",
                 "📸 Fotografía Realista": "Professional photography, hyperrealistic, award-winning photo, perfect lighting, high resolution, DSLR quality, studio lighting, crisp details, commercial photography style.",
                 "🌈 Estilo Fantástico": "Fantasy art style, magical atmosphere, ethereal lighting, mystical elements, enchanted environment, otherworldly beauty, epic fantasy scene, dramatic composition.",
                 "🤖 Futurista/Sci-Fi": "Futuristic design, cyberpunk aesthetic, neon lights, advanced technology, sleek modern architecture, sci-fi atmosphere, digital art style, high-tech environment.",
-                "� Retrato Artístico": "Professional portrait, artistic lighting, emotional expression, fine art photography, dramatic shadows, captivating eyes, artistic composition, studio quality.",
+                "👤 Retrato Artístico": "Professional portrait, artistic lighting, emotional expression, fine art photography, dramatic shadows, captivating eyes, artistic composition, studio quality.",
+                "✨ Personalizado": ""
+            }
+        elif "Kandinsky" in content_type:
+            templates = {
+                "🎨 Arte Abstracto": "Abstract art with flowing forms, vivid colors, dynamic composition, expressive brushstrokes, modern art style, contemporary aesthetic, artistic masterpiece.",
+                "🌈 Paisaje Onírico": "Dreamlike landscape with surreal elements, soft pastel colors, floating objects, magical atmosphere, fantastical environment, artistic interpretation.",
+                "🖼️ Estilo Clásico": "Classical art style, renaissance painting technique, detailed composition, traditional art, museum quality, masterful brushwork, timeless beauty.",
+                "🌸 Arte Japonés": "Japanese art style, traditional aesthetic, delicate details, harmonious composition, zen atmosphere, cultural elements, artistic elegance.",
+                "🌟 Surrealismo": "Surrealist art style, impossible scenes, dream-like imagery, unexpected combinations, artistic vision, creative interpretation, imaginative composition.",
                 "✨ Personalizado": ""
             }
         elif "Seedance" in content_type:
@@ -319,13 +496,39 @@ with tab1:
                 "🎬 Escena Cinematográfica": "Professional cinematic shot with dramatic lighting, smooth camera movement, film-quality composition, artistic framing, moody atmosphere, cinematic color grading.",
                 "✨ Personalizado": ""
             }
-        else:  # Pixverse Anime
+        elif "Pixverse" in content_type:
             templates = {
                 "🎭 Escena de Acción Anime": "an anime action scene, a woman looks around slowly, mountain landscape in the background",
                 "🌸 Personaje Kawaii": "a cute anime girl with big eyes, pink hair, sitting in a cherry blossom garden, gentle breeze moving her hair",
                 "🏯 Paisaje Japonés": "traditional Japanese temple in anime style, sunset lighting, dramatic clouds, peaceful atmosphere",
                 "⚔️ Batalla Épica": "epic anime battle scene, warriors with glowing swords, dynamic camera movement, intense lighting effects",
                 "🌙 Noche Mágica": "anime magical girl under moonlight, sparkles and magical effects, flowing dress, mystical atmosphere",
+                "✨ Personalizado": ""
+            }
+        elif "SSD-1B" in content_type:
+            templates = {
+                "🔥 Fantasía Épica": "epic fantasy creature, dramatic lighting, ultra realistic details, cinematic composition, dark fantasy atmosphere, vibrant colors, professional digital art",
+                "🌪️ Elementos Naturales": "with smoke, half ice and half fire and ultra realistic in detail, dramatic contrast, elemental powers, cinematic lighting, vibrant effects",
+                "🦅 Vida Salvaje": "majestic wild animal, ultra realistic detail, wildlife photography style, natural habitat, dramatic lighting, vibrant colors, cinematic composition",
+                "🖤 Arte Oscuro": "dark fantasy art, mysterious atmosphere, dramatic shadows, gothic elements, ultra realistic details, cinematic lighting, professional artwork",
+                "⚡ Efectos Dinámicos": "dynamic energy effects, lightning, fire, smoke, ultra realistic rendering, cinematic composition, vibrant colors, dramatic atmosphere",
+                "✨ Personalizado": ""
+            }
+        elif "VEO 3 Fast" in content_type:
+            templates = {
+                "🏃 Acción Épica": "A superhero running at incredible speed through a bustling city, leaving trails of light behind, cars and people blur as the hero moves, dynamic camera following the action, cinematic lighting, epic scale",
+                "🌊 Naturaleza Cinematográfica": "Ocean waves crashing against dramatic cliffs during golden hour, seagulls flying overhead, camera slowly panning to reveal the vast coastline, breathtaking natural beauty, cinematic quality",
+                "🚗 Persecución Urbana": "High-speed chase through neon-lit streets at night, cars weaving through traffic, dramatic lighting from street lamps, rain reflecting on wet pavement, action movie style",
+                "🦋 Transformación Mágica": "A caterpillar transforming into a butterfly in extreme slow motion, magical particles floating around, nature documentary style with macro cinematography",
+                "🎭 Drama Emocional": "Close-up of a person's face showing deep emotion, tears slowly falling, soft lighting, intimate moment captured with cinematic depth",
+                "✨ Personalizado": ""
+            }
+        else:  # Stickers Flux Pro
+            templates = {
+                "🌟 Sticker Brillante": "a shiny, colorful star sticker, cartoon style, bright and cheerful, with a glossy finish",
+                "❤️ Corazón Colorido": "a vibrant, multi-colored heart sticker, cartoon style, with a glossy shine",
+                "🐶 Perro Kawaii": "a cute, cartoon-style dog sticker, big eyes, smiling, with a colorful collar",
+                "🍕 Pizza Divertida": "a fun, cartoon-style pizza slice sticker, with exaggerated toppings and a smiling face",
                 "✨ Personalizado": ""
             }
         
@@ -366,9 +569,12 @@ with tab1:
                         start_time = time.time()
                         start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         
-                        if "Imagen" in content_type:
-                            st.info(f"🖼️ Generando imagen... Iniciado a las {start_datetime}")
+                        if "Flux Pro" in content_type:
+                            st.info(f"🖼️ Generando imagen con Flux Pro... Iniciado a las {start_datetime}")
                             prediction = generate_image(prompt, **params)
+                        elif "Kandinsky" in content_type:
+                            st.info(f"🎨 Generando imagen con Kandinsky 2.2... Iniciado a las {start_datetime}")
+                            prediction = generate_kandinsky(prompt, **params)
                             
                             # Mostrar ID de predicción
                             st.code(f"ID de predicción: {prediction.id}")
@@ -527,7 +733,7 @@ with tab1:
                             else:
                                 st.error("❌ No se pudo generar el video")
                         
-                        else:  # Video Anime Pixverse
+                        elif "Pixverse" in content_type:
                             st.info(f"🎭 Generando video anime con Pixverse... Iniciado a las {start_datetime}")
                             
                             with st.spinner("🎨 Procesando video anime..."):
@@ -590,6 +796,188 @@ with tab1:
                                     st.info("💡 Usa el botón de arriba para ver el video")
                             else:
                                 st.error("❌ No se pudo generar el video anime")
+                        
+                        elif "SSD-1B" in content_type:
+                            st.info(f"⚡ Generando imagen con SSD-1B... Iniciado a las {start_datetime}")
+                            with st.spinner("⚡ Procesando imagen con SSD-1B..."):
+                                output = generate_ssd1b(prompt, **params)
+                            if output:
+                                st.success("✅ ¡Imagen generada exitosamente!")
+                                try:
+                                    if isinstance(output, list) and len(output) > 0:
+                                        image_url = output[0]
+                                    elif isinstance(output, str):
+                                        image_url = output
+                                    else:
+                                        image_url = str(output)
+                                    st.write(f"🔗 **URL de la imagen:** {image_url}")
+                                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                    filename = f"imagen_ssd1b_{timestamp}.{params['width']}x{params['height']}.png"
+                                    local_path = download_and_save_file(image_url, filename, "imagen")
+                                    history_item = {
+                                        "tipo": "imagen",
+                                        "modelo": "SSD-1B",
+                                        "fecha": datetime.now().isoformat(),
+                                        "prompt": prompt,
+                                        "plantilla": selected_template,
+                                        "url": image_url,
+                                        "archivo_local": filename if local_path else None,
+                                        "parametros": params
+                                    }
+                                    save_to_history(history_item)
+                                    if local_path:
+                                        st.success(f"💾 Imagen guardada localmente: `{filename}`")
+                                    st.markdown(f"""
+                                    <a href="{image_url}" target="_blank">
+                                        <button style="
+                                            background-color: #ff6b6b;
+                                            color: white;
+                                            padding: 10px 20px;
+                                            border: none;
+                                            border-radius: 5px;
+                                            cursor: pointer;
+                                            font-size: 16px;
+                                            margin: 10px 0;
+                                        ">🖼️ Ver Imagen en Nueva Pestaña</button>
+                                    </a>
+                                    """, unsafe_allow_html=True)
+                                    try:
+                                        st.image(image_url, caption="Imagen generada", use_container_width=True)
+                                    except Exception as img_error:
+                                        st.warning(f"⚠️ No se pudo mostrar la imagen directamente: {str(img_error)}")
+                                        st.info("💡 Usa el botón de arriba para ver la imagen")
+                                except Exception as img_error:
+                                    st.error(f"❌ Error al procesar la imagen: {str(img_error)}")
+                            else:
+                                st.error("❌ La generación falló o no se obtuvo resultado")
+                        
+                        elif "VEO 3 Fast" in content_type:
+                            st.info(f"🚀 Generando video con VEO 3 Fast... Iniciado a las {start_datetime}")
+                            
+                            with st.spinner("🚀 Procesando video con VEO 3 Fast..."):
+                                output = generate_video_veo3(prompt, **params)
+                            
+                            if output:
+                                st.success("✅ ¡Video VEO 3 Fast generado exitosamente!")
+                                
+                                # Convertir output a string URL si es un objeto FileOutput
+                                if hasattr(output, 'url'):
+                                    video_url = output.url
+                                elif isinstance(output, str):
+                                    video_url = output
+                                else:
+                                    video_url = str(output)
+                                
+                                st.write(f"🔗 **URL del video:** {video_url}")
+                                
+                                # Descargar y guardar localmente
+                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                filename = f"video_veo3_{timestamp}.mp4"
+                                local_path = download_and_save_file(video_url, filename, "video")
+                                
+                                # Guardar en historial
+                                history_item = {
+                                    "tipo": "video_veo3",
+                                    "fecha": datetime.now().isoformat(),
+                                    "prompt": prompt,  # Guardar prompt completo
+                                    "plantilla": selected_template,
+                                    "url": video_url,
+                                    "archivo_local": filename if local_path else None,
+                                    "parametros": params
+                                }
+                                save_to_history(history_item)
+                                
+                                if local_path:
+                                    st.success(f"💾 Video guardado localmente: `{filename}`")
+                                
+                                # Botón para ver video
+                                st.markdown(f"""
+                                <a href="{video_url}" target="_blank">
+                                    <button style="
+                                        background-color: #4285F4;
+                                        color: white;
+                                        padding: 10px 20px;
+                                        border: none;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        font-size: 16px;
+                                        margin: 10px 0;
+                                    ">🚀 Ver Video VEO 3 Fast en Nueva Pestaña</button>
+                                </a>
+                                """, unsafe_allow_html=True)
+                                
+                                # Intentar mostrar el video directamente
+                                try:
+                                    st.video(video_url)
+                                except Exception as vid_error:
+                                    st.warning(f"⚠️ No se pudo mostrar el video directamente: {str(vid_error)}")
+                                    st.info("💡 Usa el botón de arriba para ver el video")
+                            else:
+                                st.error("❌ No se pudo generar el video VEO 3 Fast")
+                        
+                        else:  # Stickers Flux Pro
+                            st.info(f"📎 Generando sticker... Iniciado a las {start_datetime}")
+                            
+                            with st.spinner("🎨 Procesando sticker..."):
+                                output = generate_sticker(prompt, **params)
+                            
+                            if output:
+                                st.success("✅ ¡Sticker generado exitosamente!")
+                                
+                                # Convertir output a string URL si es un objeto FileOutput
+                                if hasattr(output, 'url'):
+                                    sticker_url = output.url
+                                elif isinstance(output, str):
+                                    sticker_url = output
+                                else:
+                                    sticker_url = str(output)
+                                
+                                st.write(f"🔗 **URL del sticker:** {sticker_url}")
+                                
+                                # Descargar y guardar localmente
+                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                filename = f"sticker_{timestamp}.png"
+                                local_path = download_and_save_file(sticker_url, filename, "sticker")
+                                
+                                # Guardar en historial
+                                history_item = {
+                                    "tipo": "sticker",
+                                    "fecha": datetime.now().isoformat(),
+                                    "prompt": prompt,  # Guardar prompt completo
+                                    "plantilla": selected_template,
+                                    "url": sticker_url,
+                                    "archivo_local": filename if local_path else None,
+                                    "parametros": params
+                                }
+                                save_to_history(history_item)
+                                
+                                if local_path:
+                                    st.success(f"💾 Sticker guardado localmente: `{filename}`")
+                                
+                                # Botón para abrir el sticker en nueva pestaña
+                                st.markdown(f"""
+                                <a href="{sticker_url}" target="_blank">
+                                    <button style="
+                                        background-color: #ff6b6b;
+                                        color: white;
+                                        padding: 10px 20px;
+                                        border: none;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        font-size: 16px;
+                                        margin: 10px 0;
+                                    ">📎 Ver Sticker en Nueva Pestaña</button>
+                                </a>
+                                """, unsafe_allow_html=True)
+                                
+                                # Intentar mostrar el sticker directamente
+                                try:
+                                    st.image(sticker_url, caption="Sticker generado", use_container_width=True)
+                                except Exception as img_error:
+                                    st.warning(f"⚠️ No se pudo mostrar el sticker directamente: {str(img_error)}")
+                                    st.info("💡 Usa el botón de arriba para ver el sticker")
+                            else:
+                                st.error("❌ No se pudo generar el sticker")
                     
                     except Exception as e:
                         st.error(f"❌ Error durante la generación: {str(e)}")
@@ -611,6 +999,8 @@ with tab2:
         total_imagenes = len([item for item in history if item.get('tipo') == 'imagen'])
         total_videos_seedance = len([item for item in history if item.get('tipo') == 'video_seedance'])
         total_videos_anime = len([item for item in history if item.get('tipo') == 'video_anime'])
+        total_videos_veo3 = len([item for item in history if item.get('tipo') == 'video_veo3'])
+        total_stickers = len([item for item in history if item.get('tipo') == 'sticker'])
         
         # Calcular costos totales estimados
         costo_total = 0
@@ -634,9 +1024,18 @@ with tab2:
                 quality = params.get('quality', '720p')
                 quality_multiplier = {'540p': 0.7, '720p': 1.0, '1080p': 1.4}.get(quality, 1.0)
                 costo_total += duration * 0.08 * quality_multiplier
+            elif item['tipo'] == 'video_veo3':
+                params = item.get('parametros', {})
+                duration = params.get('duration', 5)
+                quality = params.get('quality', 'standard')
+                quality_multiplier = {'standard': 1.0, 'high': 1.3}.get(quality, 1.0)
+                costo_total += duration * 0.12 * quality_multiplier  # VEO 3 Fast pricing estimate
+            elif item['tipo'] == 'sticker':
+                # Costo estimado para stickers (precios aproximados de FLUX Pro)
+                costo_total += 0.02  # Costo base por sticker
         
         # Mostrar métricas globales
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
         
         with col1:
             st.metric("🖼️ Imágenes", total_imagenes)
@@ -645,9 +1044,11 @@ with tab2:
         with col3:
             st.metric("🎭 Videos Anime", total_videos_anime)
         with col4:
-            st.metric("💰 Costo Total (USD)", f"${costo_total:.2f}")
+            st.metric("� Videos VEO 3", total_videos_veo3)
         with col5:
-            st.metric("💶 Costo Total (EUR)", f"€{costo_total * 0.92:.2f}")
+            st.metric("�📎 Stickers", total_stickers)
+        with col6:
+            st.metric("💰 Costo Total (USD)", f"${costo_total:.2f}")
         
         st.divider()
         
@@ -657,7 +1058,7 @@ with tab2:
         with col1:
             filter_type = st.selectbox(
                 "Filtrar por tipo:",
-                ["Todos", "imagen", "video_seedance", "video_anime"]
+                ["Todos", "imagen", "video_seedance", "video_anime", "video_veo3", "sticker"]
             )
         
         with col2:
@@ -682,7 +1083,7 @@ with tab2:
         
         # Mostrar historial filtrado
         for i, item in enumerate(filtered_history):
-            with st.expander(f"{'🖼️' if item['tipo'] == 'imagen' else '🎬' if item['tipo'] == 'video_seedance' else '🎭'} {item.get('fecha', 'Sin fecha')[:16]} - {item.get('prompt', 'Sin prompt')[:50]}..."):
+            with st.expander(f"{'🖼️' if item['tipo'] == 'imagen' else '🎬' if item['tipo'] == 'video_seedance' else '🎭' if item['tipo'] == 'video_anime' else '�' if item['tipo'] == 'video_veo3' else '�📎'} {item.get('fecha', 'Sin fecha')[:16]} - {item.get('prompt', 'Sin prompt')[:50]}..."):
                 
                 col1, col2 = st.columns([2, 1])
                 
@@ -726,7 +1127,7 @@ with tab2:
                                 aspect = f"{width/height:.2f}:1" if width >= height else f"1:{height/width:.2f}"
                                 st.metric("📏 Relación de aspecto", aspect)
                         
-                        elif item['tipo'] in ['video_seedance', 'video_anime']:
+                        elif item['tipo'] in ['video_seedance', 'video_anime', 'video_veo3']:
                             params = item.get('parametros', {})
                             duration = params.get('duration', 5)
                             
@@ -754,7 +1155,7 @@ with tab2:
                                     st.metric("💰 Costo estimado", f"${estimated_cost:.3f}")
                                     st.metric("💶 Costo en EUR", f"€{estimated_cost * 0.92:.3f}")
                             
-                            else:  # video_anime (Pixverse)
+                            elif item['tipo'] == 'video_anime':  # video_anime (Pixverse)
                                 quality = params.get('quality', '720p')
                                 style = params.get('style', 'anime')
                                 motion_mode = params.get('motion_mode', 'normal')
@@ -774,6 +1175,40 @@ with tab2:
                                     st.metric("🏃 Modo de movimiento", motion_mode.title())
                                     st.metric("💰 Costo estimado", f"${estimated_cost:.3f}")
                                     st.metric("💶 Costo en EUR", f"€{estimated_cost * 0.92:.3f}")
+                            
+                            elif item['tipo'] == 'video_veo3':  # VEO 3 Fast
+                                quality = params.get('quality', 'standard')
+                                enhance_prompt = params.get('enhance_prompt', True)
+                                aspect_ratio = params.get('aspect_ratio', '16:9')
+                                
+                                # Estimación de costo para VEO 3 Fast (~$0.12 por segundo)
+                                cost_per_second = 0.12
+                                quality_multiplier = {'standard': 1.0, 'high': 1.3}.get(quality, 1.0)
+                                estimated_cost = duration * cost_per_second * quality_multiplier
+                                
+                                col1_stats, col2_stats = st.columns(2)
+                                with col1_stats:
+                                    st.metric("⏱️ Duración", f"{duration}s")
+                                    st.metric("🎨 Calidad", quality.title())
+                                    st.metric("� Aspecto", aspect_ratio)
+                                
+                                with col2_stats:
+                                    st.metric("✨ Prompt mejorado", "Sí" if enhance_prompt else "No")
+                                    st.metric("💰 Costo estimado", f"${estimated_cost:.3f}")
+                                    st.metric("💶 Costo en EUR", f"€{estimated_cost * 0.92:.3f}")
+                        
+                        elif item['tipo'] == 'sticker':
+                            # Costo estimado para stickers (precios aproximados de FLUX Pro)
+                            estimated_cost = 0.02
+                            
+                            col1_stats, col2_stats = st.columns(2)
+                            with col1_stats:
+                                st.metric("📏 Tamaño", "1024x1024")
+                            
+
+                            with col2_stats:
+                                st.metric("💰 Costo estimado", f"${estimated_cost:.3f}")
+                                st.metric("💶 Costo en EUR", f"€{estimated_cost * 0.92:.3f}")
                         
                         # Información adicional común
                         st.divider()
@@ -813,14 +1248,14 @@ with tab2:
                             </a>
                             """, unsafe_allow_html=True)
                             st.success("💾 Archivo disponible localmente")
-                            # Mostrar preview si es imagen
-                            if item['tipo'] == 'imagen':
+                            # Mostrar preview si es imagen o sticker
+                            if item['tipo'] in ['imagen', 'sticker']:
                                 try:
                                     st.image(str(local_file), caption="Preview", use_container_width=True)
                                 except:
                                     st.info("No se puede mostrar preview")
                             # Para videos, mostrar información del archivo
-                            elif item['tipo'] in ['video_seedance', 'video_anime']:
+                            elif item['tipo'] in ['video_seedance', 'video_anime', 'video_veo3']:
                                 try:
                                     file_size = local_file.stat().st_size / (1024 * 1024)  # MB
                                     st.metric("📁 Tamaño del archivo", f"{file_size:.1f} MB")
@@ -834,3 +1269,12 @@ with tab2:
                                     st.info("Información del archivo no disponible")
                         else:
                             st.warning("📁 Archivo local no encontrado")
+
+# Footer
+st.divider()
+st.markdown("""
+<div style="text-align: center; color: #666; padding: 20px;">
+    <p>🦷 <strong>Ai Models Pro Generator</strong> - Desarrollado por Ayoze Benítez</p>
+    <p><small>Generación de contenido con modelos de IA de última generación</small></p>
+</div>
+""", unsafe_allow_html=True)
