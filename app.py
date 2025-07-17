@@ -796,27 +796,23 @@ with tab2:
                         st.info("💡 **Nota:** Los costos son estimaciones basadas en precios públicos aproximados. Los costos reales pueden variar.")
                 
                 with col2:
+                    # Botón para ver el enlace online (Replicate)
                     if item.get('url'):
                         st.markdown(f"""
                         <a href="{item['url']}" target="_blank">
-                            <button style="
-                                background-color: #007BFF;
-                                color: white;
-                                padding: 8px 16px;
-                                border: none;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                width: 100%;
-                                margin: 5px 0;
-                            ">🔗 Ver Original</button>
+                            <button style="background-color: #ff6b6b; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin: 5px 0;">🔗 Ver Online (Replicate)</button>
                         </a>
                         """, unsafe_allow_html=True)
-                    
+                    # Botón para ver el archivo local
                     if item.get('archivo_local'):
                         local_file = HISTORY_DIR / item['archivo_local']
                         if local_file.exists():
+                            st.markdown(f"""
+                            <a href="file/{item['archivo_local']}" target="_blank">
+                                <button style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin: 5px 0;">💾 Ver Local</button>
+                            </a>
+                            """, unsafe_allow_html=True)
                             st.success("💾 Archivo disponible localmente")
-                            
                             # Mostrar preview si es imagen
                             if item['tipo'] == 'imagen':
                                 try:
@@ -828,8 +824,6 @@ with tab2:
                                 try:
                                     file_size = local_file.stat().st_size / (1024 * 1024)  # MB
                                     st.metric("📁 Tamaño del archivo", f"{file_size:.1f} MB")
-                                    
-                                    # Botón para abrir el archivo local
                                     st.markdown(f"""
                                     <div style="margin: 10px 0;">
                                         <small>📂 Archivo local:</small><br>

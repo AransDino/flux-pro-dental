@@ -1,8 +1,8 @@
 # 🦷 AI Models Pro Generator
 
-**Generador avanzado de imágenes y videos dentales con IA - by Ayoze Benítez**
+**Generador avanzado de imágenes y videos con IA - by Ayoze Benítez**
 
-Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual especializado en odontología y entretenimiento.
+Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual de alta calidad. Sistema robusto con historial dual (online/local) y gestión avanzada de archivos.
 
 ## ✨ Características Principales
 
@@ -26,12 +26,16 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
   - Estimaciones de costo precisas
 - **Información temporal** (fecha, hora, antigüedad)
 
-### 💾 **Gestión de Archivos**
+### 💾 **Gestión de Archivos y Sistema Dual**
+
 - **Descarga automática** de contenido generado
 - **Almacenamiento local** en carpeta `historial/`
-- **Historial persistente** en formato JSON
+- **Sistema dual de enlaces**: Online (Replicate) y Local
+- **Historial unificado** en archivo `history.json`
 - **Vista previa** integrada para imágenes
 - **Información de archivos** para videos
+- **Botones diferenciados**: Rojo para online, azul para local
+- **Verificación de archivos** antes de mostrar enlaces locales
 
 ### 🔐 **Seguridad y Configuración**
 - **Tokens seguros** mediante archivo `config.py`
@@ -89,9 +93,12 @@ streamlit run app.py --server.port=8505
 - **Calidad**: 60-100%
 
 **Plantillas incluidas:**
-- 🦷 **Dental Clásico**: Ilustraciones 3D hiperrealistas
-- 🔬 **Instrumental Dental**: Fotografía macro de instrumentos
-- 🏥 **Consultorio Moderno**: Interiores de clínicas contemporáneas
+
+- 🎨 **Arte Digital**: Composiciones vibrantes y detalladas
+- � **Fotografía Realista**: Estilo fotográfico profesional
+- 🌈 **Estilo Fantástico**: Ambientes mágicos y místicos
+- 🤖 **Futurista/Sci-Fi**: Diseños cyberpunk y tecnológicos
+- 🎭 **Retrato Artístico**: Retratos con iluminación dramática
 
 ### 🎬 **Generación de Videos (Seedance)**
 
@@ -103,8 +110,11 @@ streamlit run app.py --server.port=8505
 - **Cámara fija**: Opcional
 
 **Plantillas incluidas:**
-- 🌊 **Clínica Oceánica**: Ambientes cinematográficos
-- 🦷 **Procedimiento Dental**: Tomas clínicas profesionales
+
+- 🌊 **Amanecer Épico**: Paisajes cinematográficos dramáticos
+- 🏙️ **Ciudad Futurista**: Escenas urbanas nocturnas
+- 🌊 **Océano Tranquilo**: Ambientes costeros serenos
+- 🎬 **Escena Cinematográfica**: Tomas profesionales de cine
 
 ### 🎭 **Generación de Videos Anime (Pixverse)**
 
@@ -123,7 +133,34 @@ streamlit run app.py --server.port=8505
 - ⚔️ **Batalla Épica**: Combates dinámicos
 - 🌙 **Noche Mágica**: Magical girls
 
-## 📊 Sistema de Estadísticas
+## � Sistema Dual de Enlaces
+
+### **Acceso Online y Local**
+La aplicación implementa un sistema robusto de doble acceso a los archivos generados:
+
+- **🔗 Ver Online (Replicate)** - Botón rojo que abre la URL original en Replicate
+- **💾 Ver Local** - Botón azul para acceder al archivo descargado localmente
+
+### **Características del Sistema Dual**
+- **Almacenamiento redundante**: Cada generación se guarda con ambas referencias
+- **Verificación automática**: Los botones solo aparecen si los recursos están disponibles
+- **Interfaz diferenciada**: Colores distintos para identificar fácilmente cada tipo de acceso
+- **Persistencia**: El historial mantiene ambos enlaces indefinidamente
+- **Recuperación**: Sistema robusto que permite recuperar elementos faltantes
+
+### **Estructura del Historial**
+```json
+{
+  "tipo": "imagen",
+  "fecha": "2025-01-17T10:30:00",
+  "prompt": "Prompt completo preservado",
+  "url": "https://replicate.delivery/...",
+  "archivo_local": "imagen_20250117_103000.webp",
+  "parametros": {...}
+}
+```
+
+## �📊 Sistema de Estadísticas
 
 ### **Resumen Global**
 - Contador de generaciones por tipo
@@ -153,12 +190,13 @@ flux-pro-dental/
 ├── 📄 requirements.txt       # Dependencias Python
 ├── 📄 run_app.bat           # Script de inicio Windows
 ├── 📄 run_app.ps1           # Script de inicio PowerShell
-├── 📁 assets/               # Recursos de la aplicación
+├── � HISTORIAL_SPEC.md     # Especificación del sistema de historial
+├── �📁 assets/               # Recursos de la aplicación
 │   └── 🖼️ logo22.jpg        # Logo personalizado
-├── 📁 historial/            # Archivos generados y metadatos
-│   ├── 📄 history.json      # Historial persistente
-│   ├── 🖼️ imagen_*.webp     # Imágenes generadas
-│   └── 🎬 video_*.mp4       # Videos generados
+├── 📁 historial/            # Sistema unificado de archivos
+│   ├── 📄 history.json      # Historial único con enlaces duales
+│   ├── 🖼️ imagen_*.webp     # Imágenes generadas (descarga local)
+│   └── 🎬 video_*.mp4       # Videos generados (descarga local)
 ├── 📁 venv/                 # Entorno virtual Python
 └── 📄 .gitignore           # Archivos excluidos de git
 ```
