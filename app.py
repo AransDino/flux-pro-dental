@@ -225,6 +225,9 @@ if not token:
     """)
     st.stop()
 
+# Configurar token como variable de entorno para replicate.run()
+os.environ["REPLICATE_API_TOKEN"] = token
+
 # Sidebar para configuración (SIEMPRE VISIBLE)
 with st.sidebar:
     # Logo en la esquina superior izquierda
