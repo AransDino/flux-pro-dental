@@ -421,6 +421,18 @@ with st.sidebar:
             "camera_motion": camera_motion,
             "motion_intensity": motion_intensity
         }
+    
+    # Botón de configuración al final del sidebar
+    st.divider()
+    
+    col_config1, col_config2 = st.columns([1, 3])
+    with col_config1:
+        if st.button("⚙️", help="Configuración de la aplicación", key="config_button"):
+            st.session_state.show_config_modal = True
+            st.rerun()
+    
+    with col_config2:
+        st.markdown("**Control de App**")
 
 # Navegación por páginas
 if st.session_state.current_page == 'generator':
@@ -1164,6 +1176,13 @@ if st.session_state.current_page == 'generator':
             st.markdown("[💃 Documentación Seedance](https://replicate.com/fofr/realvisxl-v4.0)")
             st.markdown("[🎬 Documentación Pixverse](https://replicate.com/pixverse/pixverse-v1.8)")
             st.markdown("[🚀 Documentación VEO 3 Fast](https://replicate.com/fofr/veo-3-fast)")
+            
+            # Botón de configuración con modal
+            st.divider()
+            
+            # Botón de configuración elegante
+            if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación"):
+                st.session_state.show_config_modal = True
 
     # Sección de historial avanzado
     with tab2:
@@ -1923,3 +1942,38 @@ elif st.session_state.current_page == 'biblioteca':
             st.rerun()
 
 
+# Función para mostrar el modal de configuración
+def show_config_modal():
+    """Modal de configuración con opciones de control de la aplicación"""
+    if 'show_config_modal' not in st.session_state:
+        st.session_state.show_config_modal = False
+    
+    if st.session_state.show_config_modal:
+        with st.container():
+            st.markdown("### ⚙️ Configuración de la Aplicación")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("🔄 Reiniciar Aplicación", use_container_width=True, type="secondary"):
+                    st.rerun()
+            
+            with col2:
+                if st.button("❌ Detener Aplicación", use_container_width=True, type="secondary"):
+                    st.stop()
+            
+            with col3:
+                if st.button("🚨 Cerrar Servidor", use_container_width=True, type="primary"):
+                    import os
+                    import sys
+                    os._exit(0)
+            
+            st.markdown("---")
+            
+            if st.button("✅ Cerrar Configuración", use_container_width=True):
+                st.session_state.show_config_modal = False
+                st.rerun()
+
+
+# Llamar a la función del modal al final
+show_config_modal()
