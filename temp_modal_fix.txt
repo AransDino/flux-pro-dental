@@ -1,0 +1,136 @@
+# Modal de configuración usando st.dialog (moderno)
+@st.dialog("⚙️ Configuración de la Aplicación")
+def show_config_modal():
+    """Modal moderno de configuración con opciones de control de la aplicación"""
+    
+    # Centrar todo el contenido del modal
+    col_left, col_center, col_right = st.columns([1, 3, 1])
+    
+    with col_center:
+        # Header mejorado con estilo
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            width: 100%;
+        ">
+            <h3 style="margin: 0; font-weight: bold;">🎛️ Opciones de Control</h3>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestiona el estado y comportamiento de la aplicación</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Botones de acción centrados
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Botón Reiniciar con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #4ECDC4, #44A08D);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🔄</div>
+                <div style="color: white; font-weight: bold;">REINICIAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🔄 Reiniciar", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_reiniciar_btn",
+                         help="Recarga la aplicación manteniendo la sesión"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_restart_modal = True
+                st.rerun()
+        
+        with col2:
+            # Botón Detener con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">❌</div>
+                <div style="color: white; font-weight: bold;">DETENER</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("❌ Detener", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_detener_btn",
+                         help="Detiene la ejecución de Streamlit"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_stop_modal = True
+                st.rerun()
+        
+        with col3:
+            # Botón Cerrar Servidor con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #dc3545, #c82333);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+                animation: pulse 2s infinite;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🚨</div>
+                <div style="color: white; font-weight: bold;">CERRAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🚨 Cerrar Servidor", 
+                         use_container_width=True, 
+                         type="primary",
+                         key="modal_cerrar_servidor_btn",
+                         help="Cierra completamente el servidor"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_shutdown_modal = True
+                st.rerun()
+        
+        # Separador con estilo
+        st.markdown("""
+        <div style="
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            margin: 20px 0;
+            border-radius: 1px;
+        "></div>
+        """, unsafe_allow_html=True)
+        
+        # Información adicional con mejor diseño
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        ">
+            <h4 style="margin-top: 0; color: #2c3e50;">💡 Información de Controles</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #4ECDC4; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🔄</span>
+                    <span><strong>Reiniciar:</strong> Recarga la página actual sin cerrar el servidor</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #FF6B6B; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">❌</span>
+                    <span><strong>Detener:</strong> Para la ejecución pero mantiene el servidor activo</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🚨</span>
+                    <span><strong>Cerrar Servidor:</strong> Termina completamente la aplicación</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)

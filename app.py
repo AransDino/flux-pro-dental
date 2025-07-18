@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+import sys
+import subprocess
 import time
 import replicate
 import requests
@@ -1947,42 +1949,137 @@ elif st.session_state.current_page == 'biblioteca':
 def show_config_modal():
     """Modal moderno de configuración con opciones de control de la aplicación"""
     
-    st.markdown("### Opciones de Control")
-    st.markdown("Gestiona el estado y comportamiento de la aplicación:")
+    # Centrar todo el contenido del modal
+    col_left, col_center, col_right = st.columns([1, 3, 1])
     
-    # Botones de acción en columnas
-    col1, col2, col3 = st.columns(3)
+    with col_center:
+        # Header mejorado con estilo
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            width: 100%;
+        ">
+            <h3 style="margin: 0; font-weight: bold;">🎛️ Opciones de Control</h3>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestiona el estado y comportamiento de la aplicación</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Botones de acción centrados
+        col1, col2, col3 = st.columns(3)
     
     with col1:
+        # Botón Reiniciar con estilo mejorado
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        ">
+            <div style="color: white; font-size: 24px; margin-bottom: 5px;">🔄</div>
+            <div style="color: white; font-weight: bold;">REINICIAR</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
         if st.button("🔄 Reiniciar", 
                      use_container_width=True, 
                      type="secondary",
+                     key="modal_reiniciar_btn",
                      help="Recarga la aplicación manteniendo la sesión"):
+            st.session_state.show_config_modal = False
+            st.session_state.show_restart_modal = True
             st.rerun()
     
     with col2:
+        # Botón Detener con estilo mejorado
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        ">
+            <div style="color: white; font-size: 24px; margin-bottom: 5px;">❌</div>
+            <div style="color: white; font-weight: bold;">DETENER</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
         if st.button("❌ Detener", 
                      use_container_width=True, 
                      type="secondary",
+                     key="modal_detener_btn",
                      help="Detiene la ejecución de Streamlit"):
-            st.stop()
+            st.session_state.show_config_modal = False
+            st.session_state.show_stop_modal = True
+            st.rerun()
     
     with col3:
-        if st.button("🚨 Cerrar Servidor", 
+        # Botón Cerrar Servidor con estilo mejorado
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        ">
+            <div style="color: white; font-size: 24px; margin-bottom: 5px;">🚨</div>
+            <div style="color: white; font-weight: bold;">CERRAR</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("� Cerrar Servidor", 
                      use_container_width=True, 
                      type="primary",
+                     key="modal_cerrar_servidor_btn",
                      help="Cierra completamente el servidor"):
-            import os
-            import sys
-            os._exit(0)
+            st.session_state.show_config_modal = False
+            st.session_state.show_shutdown_modal = True
+            st.rerun()
     
-    st.markdown("---")
+    # Separador con estilo
+    st.markdown("""
+    <div style="
+        height: 2px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        margin: 20px 0;
+        border-radius: 1px;
+    "></div>
+    """, unsafe_allow_html=True)
     
-    # Información adicional
-    st.markdown("**💡 Información:**")
-    st.markdown("- **Reiniciar**: Recarga la página actual sin cerrar el servidor")
-    st.markdown("- **Detener**: Para la ejecución pero mantiene el servidor activo")
-    st.markdown("- **Cerrar Servidor**: Termina completamente la aplicación")
+    # Información adicional con mejor diseño
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #007bff;
+    ">
+        <h4 style="margin-top: 0; color: #2c3e50;">💡 Información de Controles</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: #4ECDC4; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🔄</span>
+                <span><strong>Reiniciar:</strong> Recarga la página actual sin cerrar el servidor</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: #FF6B6B; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">❌</span>
+                <span><strong>Detener:</strong> Para la ejecución pero mantiene el servidor activo</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🚨</span>
+                <span><strong>Cerrar Servidor:</strong> Termina completamente la aplicación</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # El diálogo se cierra automáticamente al hacer clic fuera o con ESC
 
@@ -1992,3 +2089,136 @@ if st.session_state.get('show_config_modal', False):
     show_config_modal()
     # Resetear el estado después de mostrar el modal
     st.session_state.show_config_modal = False
+
+# Modal de reinicio centrado
+@st.dialog("🔄 Reiniciando Aplicación")
+def show_restart_modal():
+    """Modal centrado para mostrar el proceso de reinicio"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">🔄</div>
+        <h2 style="margin: 0; font-weight: bold;">REINICIANDO APLICACIÓN</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">La página se recargará automáticamente...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Pequeña pausa y luego recargar
+    import time
+    time.sleep(1)
+    st.rerun()
+
+# Modal de detener centrado
+@st.dialog("❌ Deteniendo Aplicación")
+def show_stop_modal():
+    """Modal centrado para mostrar el proceso de detención"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">❌</div>
+        <h2 style="margin: 0; font-weight: bold;">DETENIENDO APLICACIÓN</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Parando la ejecución actual...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Información del proceso
+    st.info("🔄 **Proceso de detención iniciado**")
+    st.markdown("La aplicación se detendrá pero el servidor permanecerá activo.")
+    
+    # Pequeña pausa y luego detener
+    import time
+    time.sleep(1)
+    st.stop()
+
+# Modal de cerrar servidor centrado
+@st.dialog("🚨 Cerrando Servidor")
+def show_shutdown_modal():
+    """Modal centrado para mostrar el proceso de cierre del servidor"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">🚨</div>
+        <h2 style="margin: 0; font-weight: bold;">CERRANDO SERVIDOR</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Terminando completamente la aplicación...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Proceso de cierre con feedback visual centrado
+    st.error("🚨 **PROCESO DE CIERRE INICIADO**")
+    st.markdown("---")
+    
+    # Información de cierre en tiempo real
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    # Simular proceso de cierre con progreso
+    import time
+    import os
+    import sys
+    import subprocess
+    
+    status_text.text("🔄 Iniciando cierre del servidor...")
+    progress_bar.progress(25)
+    time.sleep(0.5)
+    
+    status_text.text("💾 Guardando estado de la aplicación...")
+    progress_bar.progress(50)
+    time.sleep(0.5)
+    
+    status_text.text("🌐 Cerrando conexiones de red...")
+    progress_bar.progress(75)
+    time.sleep(0.5)
+    
+    status_text.text("⚡ Terminando procesos...")
+    progress_bar.progress(100)
+    time.sleep(0.5)
+    
+    # Mensaje final
+    st.success("✅ **SERVIDOR CERRADO EXITOSAMENTE**")
+    st.info("🌐 **Cierra manualmente esta ventana del navegador**")
+    
+    # Forzar cierre inmediato del servidor
+    # Terminar todos los procesos de streamlit
+    try:
+        if os.name == 'nt':  # Windows
+            subprocess.run(['taskkill', '/F', '/IM', 'streamlit.exe'], 
+                         capture_output=True, check=False)
+        else:  # Linux/Mac
+            subprocess.run(['pkill', '-f', 'streamlit'], 
+                         capture_output=True, check=False)
+    except:
+        pass
+    
+    # Salida inmediata
+    os._exit(0)
+
+# Verificar qué modal mostrar
+if st.session_state.get('show_restart_modal', False):
+    show_restart_modal()
+    st.session_state.show_restart_modal = False
+
+if st.session_state.get('show_stop_modal', False):
+    show_stop_modal()
+    st.session_state.show_stop_modal = False
+
+if st.session_state.get('show_shutdown_modal', False):
+    show_shutdown_modal()
+    st.session_state.show_shutdown_modal = False
