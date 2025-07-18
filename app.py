@@ -74,9 +74,9 @@ def generate_video_pixverse(prompt, **params):
 
 # Función para generar stickers
 def generate_sticker(prompt, **params):
-    # Usar el modelo específico de stickers de fofr en lugar de flux-pro
-    prediction = replicate.predictions.create(
-        model="fofr/sticker-maker",
+    # Usar el modelo específico de stickers con replicate.run()
+    output = replicate.run(
+        "fofr/sticker-maker",
         input={
             "prompt": prompt,
             "steps": 25,
@@ -87,7 +87,7 @@ def generate_sticker(prompt, **params):
             "negative_prompt": "blurry, bad quality, distorted"
         }
     )
-    return prediction
+    return output
 
 # Función para generar imágenes con Kandinsky 2.2
 def generate_kandinsky(prompt, **params):
@@ -1104,23 +1104,30 @@ if st.session_state.current_page == 'generator':
                             
                             with st.spinner("🏷️ Generando sticker..."):
                                 try:
-                                    prediction = generate_sticker(prompt, **params)
-                                    st.code(f"ID de predicción: {prediction.id}")
+                                    # generate_sticker ahora usa replicate.run() y devuelve output directo
+                                    output = generate_sticker(prompt, **params)
                                     
-                                    timeout = 120  # 2 minutos
-                                    while prediction.status not in ["succeeded", "failed", "canceled"]:
-                                        elapsed = int(time.time() - start_time)
-                                        if elapsed > timeout:
-                                            st.error("⛔ Tiempo de espera excedido")
-                                            break
-                                        time.sleep(2)
-                                        prediction.reload()
-                                    
-                                    if prediction.status == "succeeded":
+                                    if output:
                                         st.success("🏷️ ¡Sticker generado exitosamente!")
                                         
-                                        if prediction.output:
-                                            sticker_url = prediction.output[0] if isinstance(prediction.output, list) else prediction.output
+                                        # Manejar diferentes tipos de output
+                                        try:
+                                            if isinstance(output, list):
+                                                # Si es una lista, tomar el primer elemento
+                                                first_output = output[0]
+                                                if hasattr(first_output, 'url'):
+                                                    # Es un objeto FileOutput
+                                                    sticker_url = first_output.url
+                                                else:
+                                                    # Es una URL directa
+                                                    sticker_url = str(first_output)
+                                            elif hasattr(output, 'url'):
+                                                # Es un objeto FileOutput directo
+                                                sticker_url = output.url
+                                            else:
+                                                # Es una URL directa
+                                                sticker_url = str(output)
+                                            
                                             st.write(f"🔗 **URL del sticker:** {sticker_url}")
                                             
                                             # Descargar sticker
@@ -1128,10 +1135,17 @@ if st.session_state.current_page == 'generator':
                                             filename = f"sticker_{timestamp}.png"
                                             local_path = download_and_save_file(sticker_url, filename, "sticker")
                                             
-                                            # Calcular tiempo de procesamiento
-                                            processing_time = time.time() - start_time
-                                            
-                                            # Guardar en historial con información adicional para cálculo de costos
+                                        except Exception as url_error:
+                                            st.error(f"❌ Error al procesar URL del sticker: {str(url_error)}")
+                                            st.code(f"Output recibido: {type(output)} - {str(output)[:200]}")
+                                            sticker_url = None
+                                            local_path = None
+                                        
+                                        # Calcular tiempo de procesamiento
+                                        processing_time = time.time() - start_time
+                                        
+                                        # Guardar en historial solo si tenemos URL válida
+                                        if sticker_url:
                                             history_item = {
                                                 "tipo": "sticker",
                                                 "fecha": datetime.now().isoformat(),
@@ -1140,9 +1154,9 @@ if st.session_state.current_page == 'generator':
                                                 "url": sticker_url,
                                                 "archivo_local": filename if local_path else None,
                                                 "parametros": params,
-                                                "id_prediccion": prediction.id,
+                                                "id_prediccion": "N/A (output directo)",
                                                 "processing_time": processing_time,  # Tiempo real de procesamiento
-                                                "modelo": "Flux Pro Stickers"  # Modelo específico para identificación
+                                                "modelo": "Sticker Maker"  # Modelo específico para identificación
                                             }
                                             save_to_history(history_item)
                                             
@@ -1150,12 +1164,20 @@ if st.session_state.current_page == 'generator':
                                                 st.success(f"💾 Sticker guardado: `{filename}`")
                                             
                                             # Mostrar sticker
-                                            st.image(sticker_url, caption="Sticker generado", use_container_width=True)
+                                            try:
+                                                st.image(sticker_url, caption="Sticker generado", use_container_width=True)
+                                            except Exception as img_error:
+                                                st.warning(f"⚠️ No se pudo mostrar el sticker: {str(img_error)}")
+                                                st.markdown(f'<a href="{sticker_url}" target="_blank">🔗 Ver sticker en nueva pestaña</a>', unsafe_allow_html=True)
+                                        else:
+                                            st.error("❌ No se pudo obtener URL del sticker")
                                     else:
-                                        st.error(f"❌ Error en Stickers: {prediction.status}")
+                                        st.error("❌ Sticker Maker no devolvió output")
                                 
                                 except Exception as e:
                                     st.error(f"❌ Error con Stickers: {str(e)}")
+                                    st.error(f"🔍 Tipo de error: {type(e).__name__}")
+                                    st.code(traceback.format_exc())
                         
                         # Estadísticas finales
                         end_time = time.time()
