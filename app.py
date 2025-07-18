@@ -10,6 +10,13 @@ import json
 import base64
 import traceback
 
+# Importar funciones utilitarias centralizadas
+from utils import (
+    load_history, save_to_history, calculate_item_cost, 
+    load_replicate_token, download_and_save_file, get_logo_base64,
+    HISTORY_DIR, HISTORY_FILE, COST_RATES
+)
+
 # Configurar la página
 st.set_page_config(
     page_title="🦷 Ai Models Pro Generator - by Ayoze Benítez",
@@ -18,108 +25,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Configuración de directorios
-HISTORY_DIR = Path("historial")
-HISTORY_FILE = HISTORY_DIR / "history.json"
+# Funciones eliminadas - ahora importadas de utils.py:
+# - load_history()
+# - save_to_history() 
+# - download_and_save_file()
+# - calculate_item_cost()
+# - load_config() -> load_replicate_token()
 
-# Crear directorio de historial si no existe
-HISTORY_DIR.mkdir(exist_ok=True)
+# Función eliminada - load_config() ahora es load_replicate_token() en utils.py
 
-# Funciones de historial
-def load_history():
-    """Cargar historial desde archivo JSON y normalizar datos"""
-    if HISTORY_FILE.exists():
-        try:
-            with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-                history = json.load(f)
-                
-                # Normalizar tipos de video incorrectos
-                for item in history:
-                    if item.get('tipo') in ['video_seedance', 'video_anime']:
-                        item['tipo'] = 'video'
-                        # Asegurar que el modelo está correctamente asignado
-                        if 'video_seedance' in item.get('tipo', '') and not item.get('modelo'):
-                            item['modelo'] = 'Seedance'
-                        elif 'video_anime' in item.get('tipo', '') and not item.get('modelo'):
-                            item['modelo'] = 'Pixverse'
-                
-                return history
-        except Exception:
-            return []
-    return []
-
-def save_to_history(item):
-    """Guardar item al historial"""
-    try:
-        # Limpiar cualquier objeto no serializable del item
-        clean_item = {}
-        for key, value in item.items():
-            try:
-                # Intentar serializar cada valor individualmente
-                json.dumps(value)
-                clean_item[key] = value
-            except (TypeError, ValueError):
-                # Si no se puede serializar, convertir a string
-                clean_item[key] = str(value)
-        
-        history = load_history()
-        history.insert(0, clean_item)  # Añadir al principio
-        
-        # Mantener solo los últimos 100 elementos
-        history = history[:100]
-        
-        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
-            
-    except Exception as e:
-        st.error(f"Error al guardar historial: {str(e)}")
-        # Debug: mostrar más información sobre el error
-        st.error(f"Tipo de error: {type(e).__name__}")
-        st.error(f"Item que causó el error: {str(item)[:200]}...")
-
-def download_and_save_file(url, filename, file_type):
-    """Descargar archivo y guardarlo localmente"""
-    try:
-        local_path = HISTORY_DIR / filename
-        
-        # Si ya existe, no descargar de nuevo
-        if local_path.exists():
-            return str(local_path)
-        
-        response = requests.get(url, timeout=60)
-        if response.status_code == 200:
-            with open(local_path, 'wb') as f:
-                f.write(response.content)
-            return str(local_path)
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Error al descargar {file_type}: {str(e)}")
-        return None
-
-# Función para cargar configuración
-def load_config():
-    try:
-        from config import REPLICATE_API_TOKEN
-        if REPLICATE_API_TOKEN == "tu_token_aqui":
-            return None
-        os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
-        return REPLICATE_API_TOKEN
-    except ImportError:
-        return None
-
-# Función para cargar logo en base64
-def get_logo_base64():
-    """Cargar el logo y convertirlo a base64 para embebido en HTML"""
-    logo_path = Path("assets/logo22.jpg")
-    try:
-        if logo_path.exists():
-            with open(logo_path, "rb") as f:
-                return base64.b64encode(f.read()).decode()
-        else:
-            return ""
-    except Exception:
-        return ""
+# Función eliminada - get_logo_base64() ahora en utils.py
 
 # Función para generar imagen
 def generate_image(prompt, **params):
@@ -254,136 +169,9 @@ def update_generation_stats(model, time_taken, success):
     with open(stats_file, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
 
-# Tarifas reales por unidad extraídas de la factura de Replicate
-COST_RATES = {
-    'imagen': {
-        'flux_pro': {'rate': 0.055, 'unit': 'imagen'},      # $0.055 por imagen
-        'kandinsky': {'rate': 0.0014, 'unit': 'segundo'},   # $0.0014 por segundo  
-        'ssd_1b': {'rate': 0.000975, 'unit': 'segundo'}     # $0.000975 por segundo
-    },
-    'video': {
-        'seedance': {'rate': 0.15, 'unit': 'segundo'},      # $0.15 por segundo
-        'pixverse': {'rate': 0.010, 'unit': 'unit'},        # $0.010 por unit (calculado por duración/resolución)
-        'veo3': {'rate': 0.40, 'unit': 'segundo'}           # $0.40 por segundo
-    },
-    'sticker': {'rate': 0.055, 'unit': 'sticker'}           # $0.055 por sticker
-}
+# Tarifas eliminadas - ahora importadas de utils.py
 
-def calculate_item_cost(item):
-    """Calcular el costo de un item individual basado en sus características reales"""
-    item_type = item.get('tipo', 'imagen')
-    archivo_local = item.get('archivo_local', '')
-    modelo = item.get('modelo', '').lower()
-    parametros = item.get('parametros', {})
-    
-    # Normalizar tipos de video incorrectos
-    if item_type == 'video_seedance':
-        item_type = 'video'
-    elif item_type == 'video_anime':
-        item_type = 'video'
-    
-    # Variables para el cálculo
-    cost = 0
-    model_info = ""
-    calculation_details = ""
-    
-    if item_type == 'imagen':
-        # Detectar modelo de imagen
-        if 'kandinsky' in archivo_local.lower() or 'kandinsky' in modelo:
-            model_key = 'kandinsky'
-            # Usar tiempo guardado o estimar basado en parámetros
-            seconds = item.get('processing_time', 12)  # Tiempo real si está guardado
-            if 'num_inference_steps' in parametros:
-                # Estimar basado en steps (más steps = más tiempo)
-                steps = parametros['num_inference_steps']
-                seconds = max(8, min(15, steps * 0.4))  # Entre 8-15 segundos según steps
-            cost = COST_RATES['imagen'][model_key]['rate'] * seconds
-            model_info = f"Kandinsky ({seconds:.1f}s)"
-            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} × {seconds:.1f}s"
-            
-        elif 'ssd' in archivo_local.lower() or 'ssd' in modelo:
-            model_key = 'ssd_1b'
-            # Usar tiempo guardado o estimar basado en parámetros
-            seconds = item.get('processing_time', 6)  # Tiempo real si está guardado
-            if 'num_inference_steps' in parametros:
-                # Estimar basado en steps (más steps = más tiempo)
-                steps = parametros['num_inference_steps']
-                seconds = max(4, min(10, steps * 0.2))  # Entre 4-10 segundos según steps
-            cost = COST_RATES['imagen'][model_key]['rate'] * seconds
-            model_info = f"SSD-1B ({seconds:.1f}s)"
-            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} × {seconds:.1f}s"
-            
-        else:  # Flux Pro por defecto
-            model_key = 'flux_pro'
-            cost = COST_RATES['imagen'][model_key]['rate']
-            model_info = "Flux Pro"
-            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} por imagen"
-            
-    elif item_type == 'video':
-        # Detectar modelo de video
-        if 'seedance' in archivo_local.lower() or 'seedance' in modelo:
-            model_key = 'seedance'
-            # Usar duración guardada o estimar (generalmente 5 segundos)
-            seconds = item.get('video_duration', 5)
-            cost = COST_RATES['video'][model_key]['rate'] * seconds
-            model_info = f"Seedance ({seconds}s)"
-            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
-            
-        elif 'pixverse' in archivo_local.lower() or 'pixverse' in modelo:
-            model_key = 'pixverse'
-            # Para Pixverse usar units calculadas por duración y resolución
-            units = item.get('pixverse_units', 1)  # Units reales si están guardadas
-            
-            # Si no tenemos units guardadas, estimar basado en parámetros
-            if units == 1 and parametros:
-                # Estimar units basado en duración y resolución
-                duration = parametros.get('duration', '5s')
-                resolution = parametros.get('resolution', '720p')
-                
-                # Convertir duración a número
-                duration_num = 5  # Por defecto
-                if isinstance(duration, str) and duration.endswith('s'):
-                    duration_num = int(duration[:-1])
-                elif isinstance(duration, (int, float)):
-                    duration_num = duration
-                
-                # Calcular units basado en duración y resolución
-                base_units = duration_num * 6  # Base: 6 units por segundo
-                if '1080p' in str(resolution):
-                    units = base_units * 1.5  # 50% más para 1080p
-                elif '540p' in str(resolution):
-                    units = base_units * 0.7  # 30% menos para 540p
-                else:  # 720p
-                    units = base_units
-                
-                units = round(units, 1)
-            
-            cost = COST_RATES['video'][model_key]['rate'] * units
-            model_info = f"Pixverse ({units} units)"
-            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {units} units"
-            
-        elif 'veo3' in archivo_local.lower() or 'veo' in modelo:
-            model_key = 'veo3'
-            # Usar duración guardada o estimar (generalmente 5 segundos)
-            seconds = item.get('video_duration', 5)
-            cost = COST_RATES['video'][model_key]['rate'] * seconds
-            model_info = f"VEO 3 Fast ({seconds}s)"
-            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
-            
-        else:
-            # Video genérico - usar Seedance como default
-            model_key = 'seedance'
-            seconds = item.get('video_duration', 5)
-            cost = COST_RATES['video'][model_key]['rate'] * seconds
-            model_info = f"Video genérico ({seconds}s)"
-            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
-            
-    elif item_type == 'sticker':
-        cost = COST_RATES['sticker']['rate']
-        model_info = "Sticker Flux Pro"
-        calculation_details = f"${COST_RATES['sticker']['rate']} por sticker"
-    
-    return cost, model_info, calculation_details
+# Función calculate_item_cost eliminada - ahora importada de utils.py
 
 # Inicializar estado de sesión para navegación
 if 'current_page' not in st.session_state:
@@ -428,7 +216,7 @@ with header_col2:
             st.rerun()
 
 # Verificar configuración
-token = load_config()
+token = load_replicate_token()
 if not token:
     st.error("❌ **Error de configuración**")
     st.markdown("""
@@ -1085,60 +873,65 @@ if st.session_state.current_page == 'generator':
                             
                             with st.spinner("💃 Procesando con Seedance..."):
                                 try:
-                                    prediction = generate_video_seedance(prompt, **params)
-                                    st.code(f"ID de predicción: {prediction.id}")
+                                    # Seedance usa replicate.run() que devuelve el resultado directamente
+                                    output = generate_video_seedance(prompt, **params)
                                     
-                                    timeout = 180  # 3 minutos
-                                    while prediction.status not in ["succeeded", "failed", "canceled"]:
-                                        elapsed = int(time.time() - start_time)
-                                        if elapsed > timeout:
-                                            st.error("⛔ Tiempo de espera excedido")
-                                            break
-                                        time.sleep(2)
-                                        prediction.reload()
-                                    
-                                    if prediction.status == "succeeded":
+                                    if output:
                                         st.success("💃 ¡Generación exitosa!")
                                         
-                                        if prediction.output:
-                                            result_url = prediction.output[0] if isinstance(prediction.output, list) else prediction.output
+                                        # Manejar diferentes tipos de output
+                                        try:
+                                            if isinstance(output, list):
+                                                result_url = output[0]
+                                            elif hasattr(output, 'url'):
+                                                result_url = output.url
+                                            else:
+                                                result_url = str(output)
+                                            
                                             st.write(f"🔗 **URL del resultado:** {result_url}")
                                             
                                             # Determinar tipo de archivo
-                                            file_ext = "jpg"
-                                            if result_url.lower().endswith(('.mp4', '.mov')):
-                                                file_ext = "mp4"
+                                            file_ext = "mp4"
+                                            if result_url.lower().endswith(('.jpg', '.jpeg', '.png')):
+                                                file_ext = "jpg"
                                             
                                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                                             filename = f"seedance_{timestamp}.{file_ext}"
-                                            local_path = download_and_save_file(result_url, filename, "media")
+                                            local_path = download_and_save_file(result_url, filename, "video")
                                             
                                             # Guardar en historial
                                             history_item = {
-                                                "tipo": "media",
+                                                "tipo": "video",
+                                                "modelo": "seedance",
                                                 "fecha": datetime.now().isoformat(),
                                                 "prompt": prompt,
                                                 "plantilla": selected_template,
                                                 "url": result_url,
                                                 "archivo_local": filename if local_path else None,
                                                 "parametros": params,
-                                                "id_prediccion": prediction.id
+                                                "video_duration": params.get('duration', 5),
+                                                "processing_time": int(time.time() - start_time)
                                             }
                                             save_to_history(history_item)
                                             
                                             if local_path:
-                                                st.success(f"💾 Archivo guardado: `{filename}`")
+                                                st.success(f"💾 Video guardado: `{filename}`")
                                             
                                             # Mostrar según tipo
                                             if file_ext == "mp4":
                                                 st.video(result_url)
                                             else:
                                                 st.image(result_url, caption="Resultado Seedance", use_container_width=True)
+                                        
+                                        except Exception as url_error:
+                                            st.error(f"❌ Error procesando URL: {str(url_error)}")
+                                            st.code(f"Output recibido: {type(output).__name__}")
                                     else:
-                                        st.error(f"❌ Error en Seedance: {prediction.status}")
+                                        st.error("❌ Seedance no devolvió output")
                                 
                                 except Exception as e:
                                     st.error(f"❌ Error con Seedance: {str(e)}")
+                                    st.code(f"Tipo de error: {type(e).__name__}")
                         
                         elif "Pixverse" in content_type:
                             st.info(f"🎬 Generando video con Pixverse... Iniciado a las {start_datetime}")
@@ -1515,120 +1308,8 @@ if st.session_state.current_page == 'generator':
                 'sticker': {'rate': 0.055, 'unit': 'sticker'}           # $0.055 por sticker
             }
             
-            def calculate_item_cost(item):
-                """Calcular el costo de un item individual basado en sus características reales"""
-                item_type = item.get('tipo', 'imagen')
-                archivo_local = item.get('archivo_local', '')
-                modelo = item.get('modelo', '').lower()
-                parametros = item.get('parametros', {})
-                
-                # Normalizar tipos de video incorrectos
-                if item_type == 'video_seedance':
-                    item_type = 'video'
-                elif item_type == 'video_anime':
-                    item_type = 'video'
-                
-                # Variables para el cálculo
-                cost = 0
-                model_info = ""
-                calculation_details = ""
-                
-                if item_type == 'imagen':
-                    # Detectar modelo de imagen
-                    if 'kandinsky' in archivo_local.lower() or 'kandinsky' in modelo:
-                        model_key = 'kandinsky'
-                        # Usar tiempo guardado o estimar basado en parámetros
-                        seconds = item.get('processing_time', 12)  # Tiempo real si está guardado
-                        if 'num_inference_steps' in parametros:
-                            # Estimar basado en steps (más steps = más tiempo)
-                            steps = parametros['num_inference_steps']
-                            seconds = max(8, min(15, steps * 0.4))  # Entre 8-15 segundos según steps
-                        cost = cost_rates['imagen'][model_key]['rate'] * seconds
-                        model_info = f"Kandinsky ({seconds:.1f}s)"
-                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} × {seconds:.1f}s"
-                        
-                    elif 'ssd' in archivo_local.lower() or 'ssd' in modelo:
-                        model_key = 'ssd_1b'
-                        # Usar tiempo guardado o estimar basado en parámetros
-                        seconds = item.get('processing_time', 6)  # Tiempo real si está guardado
-                        if 'num_inference_steps' in parametros:
-                            steps = parametros['num_inference_steps']
-                            seconds = max(4, min(10, steps * 0.2))  # Entre 4-10 segundos según steps
-                        cost = cost_rates['imagen'][model_key]['rate'] * seconds
-                        model_info = f"SSD-1B ({seconds:.1f}s)"
-                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} × {seconds:.1f}s"
-                        
-                    else:  # Flux Pro por defecto
-                        model_key = 'flux_pro'
-                        cost = cost_rates['imagen'][model_key]['rate']
-                        model_info = "Flux Pro"
-                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} por imagen"
-                        
-                elif item_type == 'video':
-                    # Detectar modelo de video
-                    if 'seedance' in archivo_local.lower() or 'seedance' in modelo:
-                        model_key = 'seedance'
-                        # Usar duración guardada o estimar (generalmente 5 segundos)
-                        seconds = item.get('video_duration', 5)
-                        cost = cost_rates['video'][model_key]['rate'] * seconds
-                        model_info = f"Seedance ({seconds}s)"
-                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
-                        
-                    elif 'pixverse' in archivo_local.lower() or 'pixverse' in modelo:
-                        model_key = 'pixverse'
-                        # Para Pixverse usar units calculadas por duración y resolución
-                        units = item.get('pixverse_units', 1)  # Units reales si están guardadas
-                        
-                        # Si no tenemos units guardadas, estimar basado en parámetros
-                        if units == 1 and parametros:
-                            # Estimar units basado en duración y resolución
-                            duration = parametros.get('duration', '5s')
-                            resolution = parametros.get('resolution', '720p')
-                            
-                            # Convertir duración a número
-                            duration_num = 5  # Por defecto
-                            if isinstance(duration, str) and duration.endswith('s'):
-                                duration_num = int(duration[:-1])
-                            elif isinstance(duration, (int, float)):
-                                duration_num = duration
-                            
-                            # Calcular units basado en duración y resolución
-                            base_units = duration_num * 6  # Base: 6 units por segundo
-                            if '1080p' in str(resolution):
-                                units = base_units * 1.5  # 50% más para 1080p
-                            elif '540p' in str(resolution):
-                                units = base_units * 0.7  # 30% menos para 540p
-                            else:  # 720p
-                                units = base_units
-                            
-                            units = round(units, 1)
-                        
-                        cost = cost_rates['video'][model_key]['rate'] * units
-                        model_info = f"Pixverse ({units} units)"
-                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {units} units"
-                        
-                    elif 'veo3' in archivo_local.lower() or 'veo' in modelo:
-                        model_key = 'veo3'
-                        # Usar duración guardada o estimar (generalmente 5 segundos)
-                        seconds = item.get('video_duration', 5)
-                        cost = cost_rates['video'][model_key]['rate'] * seconds
-                        model_info = f"VEO 3 Fast ({seconds}s)"
-                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
-                        
-                    else:
-                        # Video genérico - usar Seedance como default
-                        model_key = 'seedance'
-                        seconds = item.get('video_duration', 5)
-                        cost = cost_rates['video'][model_key]['rate'] * seconds
-                        model_info = f"Video genérico ({seconds}s)"
-                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
-                        
-                elif item_type == 'sticker':
-                    cost = cost_rates['sticker']['rate']
-                    model_info = "Sticker Flux Pro"
-                    calculation_details = f"${cost_rates['sticker']['rate']} por sticker"
-                
-                return cost, model_info, calculation_details
+            # Usar la función calculate_item_cost de utils.py
+            # (eliminada función duplicada)
             
             # Calcular costo total
             total_cost_usd = 0
