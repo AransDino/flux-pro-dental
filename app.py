@@ -27,11 +27,23 @@ HISTORY_DIR.mkdir(exist_ok=True)
 
 # Funciones de historial
 def load_history():
-    """Cargar historial desde archivo JSON"""
+    """Cargar historial desde archivo JSON y normalizar datos"""
     if HISTORY_FILE.exists():
         try:
             with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                history = json.load(f)
+                
+                # Normalizar tipos de video incorrectos
+                for item in history:
+                    if item.get('tipo') in ['video_seedance', 'video_anime']:
+                        item['tipo'] = 'video'
+                        # Asegurar que el modelo está correctamente asignado
+                        if 'video_seedance' in item.get('tipo', '') and not item.get('modelo'):
+                            item['modelo'] = 'Seedance'
+                        elif 'video_anime' in item.get('tipo', '') and not item.get('modelo'):
+                            item['modelo'] = 'Pixverse'
+                
+                return history
         except Exception:
             return []
     return []
@@ -242,21 +254,47 @@ def update_generation_stats(model, time_taken, success):
     with open(stats_file, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
 
-# Título principal
-st.markdown("""
-<div style="text-align: left;">
-    <h1 style="margin-bottom: 0;">🦷 Ai Models Pro Generator</h1>
-    <p style="font-family: 'Brush Script MT', 'Lucida Handwriting', 'Apple Chancery', cursive; 
-              font-size: 24px; 
-              color: #2E86AB; 
-              margin-top: -10px; 
-              font-style: italic;
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
-        - by Ayoze Benítez
-    </p>
-</div>
-""", unsafe_allow_html=True)
-st.markdown("### Generador de contenido con modelos de IA avanzados")
+# Inicializar estado de sesión para navegación
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 'generator'
+
+if 'selected_item_index' not in st.session_state:
+    st.session_state.selected_item_index = None
+
+# Header con título y botón de biblioteca
+header_col1, header_col2 = st.columns([4, 1])
+
+with header_col1:
+    st.markdown("""
+    <div style="text-align: left;">
+        <h1 style="margin-bottom: 0;">🦷 Ai Models Pro Generator</h1>
+        <p style="font-family: 'Brush Script MT', 'Lucida Handwriting', 'Apple Chancery', cursive; 
+                  font-size: 24px; 
+                  color: #2E86AB; 
+                  margin-top: -10px; 
+                  font-style: italic;
+                  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+            - by Ayoze Benítez
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.session_state.current_page == 'generator':
+        st.markdown("### Generador de contenido con modelos de IA avanzados")
+    else:
+        st.markdown("### Biblioteca de contenido generado")
+
+with header_col2:
+    st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+    
+    if st.session_state.current_page == 'generator':
+        if st.button("📚 Biblioteca", type="secondary", use_container_width=True):
+            st.session_state.current_page = 'biblioteca'
+            st.rerun()
+    else:
+        if st.button("🚀 Generador", type="secondary", use_container_width=True):
+            st.session_state.current_page = 'generator'
+            st.rerun()
 
 # Verificar configuración
 token = load_config()
@@ -492,15 +530,18 @@ with st.sidebar:
             "safety_tolerance": 2
         }
 
-# Pestañas principales
-tab1, tab2 = st.tabs(["🚀 Generar", "📂 Historial"])
+# Navegación por páginas
+if st.session_state.current_page == 'generator':
+    # PÁGINA DEL GENERADOR (contenido original)
+    # Pestañas principales para el generador
+    tab1, tab2 = st.tabs(["🚀 Generar", "📂 Historial"])
 
-with tab1:
-    # Área principal de generación
-    st.subheader(f"✨ Generar {content_type}")
-    
-    # Área principal
-    col1, col2 = st.columns([2, 1])
+    with tab1:
+        # Área principal de generación
+        st.subheader(f"✨ Generar {content_type}")
+        
+        # Área principal
+        col1, col2 = st.columns([2, 1])
     
     with col1:
         st.header("📝 Prompt")
@@ -513,6 +554,12 @@ with tab1:
                 "🌈 Estilo Fantástico": "Fantasy art style, magical atmosphere, ethereal lighting, mystical elements, enchanted environment, otherworldly beauty, epic fantasy scene, dramatic composition.",
                 "🤖 Futurista/Sci-Fi": "Futuristic design, cyberpunk aesthetic, neon lights, advanced technology, sleek modern architecture, sci-fi atmosphere, digital art style, high-tech environment.",
                 "👤 Retrato Artístico": "Professional portrait, artistic lighting, emotional expression, fine art photography, dramatic shadows, captivating eyes, artistic composition, studio quality.",
+                "🏞️ Paisaje Natural": "Breathtaking natural landscape, golden hour lighting, majestic mountains, pristine wilderness, dramatic sky, professional nature photography, epic vista, serene beauty.",
+                "🌃 Ciudad Nocturna": "Urban cityscape at night, neon reflections on wet streets, dramatic lighting, architectural photography, bustling metropolis, vibrant nightlife, modern skyline.",
+                "🦋 Macro Naturaleza": "Extreme macro photography, intricate details, morning dew drops, delicate textures, shallow depth of field, professional wildlife photography, natural beauty.",
+                "🎭 Retrato Dramático": "Dramatic portrait with intense lighting, deep shadows, emotional expression, cinematic style, fine art photography, powerful mood, artistic vision.",
+                "🌺 Estilo Vintage": "Vintage aesthetic, retro color palette, nostalgic atmosphere, classic composition, aged film look, timeless beauty, artistic vintage style.",
+                "🔥 Acción Épica": "Epic action scene, dynamic movement, explosive energy, cinematic composition, dramatic lighting, intense atmosphere, superhero style, powerful imagery.",
                 "✨ Personalizado": ""
             }
         elif "Kandinsky" in content_type:
@@ -522,6 +569,11 @@ with tab1:
                 "🖼️ Estilo Clásico": "Classical art style, renaissance painting technique, detailed composition, traditional art, museum quality, masterful brushwork, timeless beauty.",
                 "🌸 Arte Japonés": "Japanese art style, traditional aesthetic, delicate details, harmonious composition, zen atmosphere, cultural elements, artistic elegance.",
                 "🌟 Surrealismo": "Surrealist art style, impossible scenes, dream-like imagery, unexpected combinations, artistic vision, creative interpretation, imaginative composition.",
+                "🎭 Expresionismo": "Expressionist art style, bold colors, emotional intensity, distorted forms, powerful brushstrokes, psychological depth, dramatic mood.",
+                "🌊 Impresionismo": "Impressionist painting style, soft brush strokes, natural lighting, outdoor scenes, color harmony, atmospheric effects, gentle beauty.",
+                "🎪 Pop Art": "Pop art style, bright bold colors, graphic elements, contemporary culture, commercial aesthetic, vibrant imagery, modern art movement.",
+                "🌙 Arte Místico": "Mystical art with spiritual elements, cosmic themes, ethereal atmosphere, transcendent beauty, sacred geometry, divine inspiration.",
+                "🏛️ Arte Neoclásico": "Neoclassical art style, elegant proportions, refined details, historical themes, marble textures, classical beauty, timeless sophistication.",
                 "✨ Personalizado": ""
             }
         elif "Seedance" in content_type:
@@ -530,6 +582,12 @@ with tab1:
                 "🏙️ Ciudad Futurista": "Futuristic cityscape at night, neon lights reflecting on wet streets, slow camera pan across towering skyscrapers, cyberpunk atmosphere, dramatic lighting, urban cinematic scene.",
                 "🌊 Océano Tranquilo": "Serene ocean waves gently rolling onto pristine beach, golden sunset lighting, smooth camera tracking shot along shoreline, peaceful coastal scene, relaxing atmosphere.",
                 "🎬 Escena Cinematográfica": "Professional cinematic shot with dramatic lighting, smooth camera movement, film-quality composition, artistic framing, moody atmosphere, cinematic color grading.",
+                "🌲 Bosque Místico": "Enchanted forest with magical particles floating, cinematic tracking shot through ancient trees, ethereal lighting filtering through canopy, mystical atmosphere, fantasy documentary style.",
+                "🌆 Timelapse Urbano": "Urban timelapse with fast-moving clouds, bustling street traffic, dynamic lighting changes from day to night, cinematic urban documentary, modern city rhythm.",
+                "🦅 Vuelo Épico": "Aerial cinematography following majestic eagle soaring over vast landscape, smooth camera tracking, nature documentary style, epic wide shots, dramatic sky.",
+                "🔥 Elementos Dramáticos": "Dramatic scene with fire and smoke effects, cinematic lighting, intense atmosphere, action movie style, dynamic camera movement.",
+                "🌙 Noche Estrellada": "Starry night sky timelapse, Milky Way rotating overhead, peaceful landscape silhouette, astronomical cinematography, cosmic beauty.",
+                "⚡ Tormenta Épica": "Epic thunderstorm with lightning strikes, dramatic weather cinematography, dark storm clouds, nature's raw power, cinematic storm documentation.",
                 "✨ Personalizado": ""
             }
         elif "Pixverse" in content_type:
@@ -539,6 +597,11 @@ with tab1:
                 "🏯 Paisaje Japonés": "traditional Japanese temple in anime style, sunset lighting, dramatic clouds, peaceful atmosphere",
                 "⚔️ Batalla Épica": "epic anime battle scene, warriors with glowing swords, dynamic camera movement, intense lighting effects",
                 "🌙 Noche Mágica": "anime magical girl under moonlight, sparkles and magical effects, flowing dress, mystical atmosphere",
+                "🦊 Espíritu del Bosque": "anime fox spirit in enchanted forest, glowing eyes, magical aura, mystical atmosphere, nature spirits dancing",
+                "🏫 Escuela Anime": "anime school scene, students in uniform, cherry blossoms falling, warm afternoon light, slice of life atmosphere",
+                "🌊 Playa Tropical": "anime beach scene, crystal clear water, palm trees swaying, sunset colors, peaceful vacation atmosphere",
+                "🎪 Festival Matsuri": "anime summer festival, paper lanterns, fireworks in background, traditional yukata, festive atmosphere",
+                "🚀 Aventura Espacial": "anime space adventure, starship cockpit, cosmic background, dramatic lighting, sci-fi atmosphere",
                 "✨ Personalizado": ""
             }
         elif "SSD-1B" in content_type:
@@ -548,6 +611,11 @@ with tab1:
                 "🦅 Vida Salvaje": "majestic wild animal, ultra realistic detail, wildlife photography style, natural habitat, dramatic lighting, vibrant colors, cinematic composition",
                 "🖤 Arte Oscuro": "dark fantasy art, mysterious atmosphere, dramatic shadows, gothic elements, ultra realistic details, cinematic lighting, professional artwork",
                 "⚡ Efectos Dinámicos": "dynamic energy effects, lightning, fire, smoke, ultra realistic rendering, cinematic composition, vibrant colors, dramatic atmosphere",
+                "🌌 Espacio Cósmico": "cosmic space scene, nebulae, stars, galaxies, ultra realistic space photography, dramatic celestial lighting, vibrant cosmic colors, epic scale",
+                "🏰 Arquitectura Épica": "majestic ancient castle, dramatic architecture, ultra realistic stonework, cinematic lighting, medieval atmosphere, epic fortress design",
+                "🌋 Paisaje Volcánico": "volcanic landscape, lava flows, dramatic geological formations, ultra realistic terrain, cinematic lighting, powerful natural forces",
+                "🐉 Criatura Mítica": "mythical dragon, ultra realistic scales and textures, dramatic pose, cinematic lighting, fantasy atmosphere, epic creature design",
+                "⚔️ Guerrero Épico": "epic warrior in battle armor, ultra realistic metal textures, dramatic pose, cinematic lighting, heroic atmosphere, fantasy warrior design",
                 "✨ Personalizado": ""
             }
         elif "VEO 3 Fast" in content_type:
@@ -557,6 +625,11 @@ with tab1:
                 "🚗 Persecución Urbana": "High-speed chase through neon-lit streets at night, cars weaving through traffic, dramatic lighting from street lamps, rain reflecting on wet pavement, action movie style",
                 "🦋 Transformación Mágica": "A caterpillar transforming into a butterfly in extreme slow motion, magical particles floating around, nature documentary style with macro cinematography",
                 "🎭 Drama Emocional": "Close-up of a person's face showing deep emotion, tears slowly falling, soft lighting, intimate moment captured with cinematic depth",
+                "🌪️ Tormenta Épica": "Massive tornado approaching across open plains, dark storm clouds swirling, lightning illuminating the scene, dramatic weather phenomenon, nature's raw power",
+                "🏔️ Montaña Majestuosa": "Drone shot over snow-capped mountain peaks, morning mist clearing to reveal breathtaking alpine vista, golden sunrise light, cinematic landscape",
+                "🌃 Metrópolis Futurista": "Futuristic city with flying cars, holographic billboards, neon lights reflecting on glass buildings, cyberpunk atmosphere, sci-fi urban landscape",
+                "🔥 Volcán en Erupción": "Active volcano erupting, lava flows cascading down mountainside, dramatic geological event, cinematic documentation of earth's power",
+                "🌈 Aurora Boreal": "Northern lights dancing across arctic sky, ethereal green and purple colors, time-lapse photography, magical atmospheric phenomenon",
                 "✨ Personalizado": ""
             }
         else:  # Stickers Flux Pro
@@ -565,6 +638,12 @@ with tab1:
                 "❤️ Corazón Colorido": "a vibrant, multi-colored heart sticker, cartoon style, with a glossy shine",
                 "🐶 Perro Kawaii": "a cute, cartoon-style dog sticker, big eyes, smiling, with a colorful collar",
                 "🍕 Pizza Divertida": "a fun, cartoon-style pizza slice sticker, with exaggerated toppings and a smiling face",
+                "🌈 Arcoíris Feliz": "a cheerful rainbow sticker with clouds, cartoon style, bright colors, glossy finish, kawaii aesthetic",
+                "🎃 Halloween Spooky": "a cute Halloween pumpkin sticker, cartoon style, friendly face, orange and black colors, glossy finish",
+                "🦄 Unicornio Mágico": "a magical unicorn sticker, cartoon style, pastel colors, rainbow mane, sparkles, glossy finish",
+                "🌮 Taco Divertido": "a funny taco character sticker, cartoon style, smiling face, vibrant colors, Mexican food theme",
+                "🐱 Gato Adorable": "an adorable cat sticker, cartoon style, big eyes, cute pose, colorful fur, glossy finish",
+                "🎮 Gaming Retro": "a retro gaming console sticker, pixel art style, nostalgic colors, classic gaming aesthetic, glossy finish",
                 "✨ Personalizado": ""
             }
         
@@ -943,6 +1022,9 @@ with tab1:
                                         st.success("🎬 ¡Video generado exitosamente!")
                                         
                                         # Manejar diferentes tipos de output
+                                        video_url = None
+                                        local_path = None
+                                        
                                         try:
                                             if isinstance(output, list):
                                                 # Si es una lista, tomar el primer elemento
@@ -960,22 +1042,41 @@ with tab1:
                                                 # Es una URL directa
                                                 video_url = str(output)
                                             
-                                            st.write(f"🔗 **URL del video:** {video_url}")
-                                            st.code(f"Tipo de output: {type(output).__name__}")
-                                            
-                                            # Descargar video
+                                            # Descargar inmediatamente para evitar que expire la URL
                                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                                             filename = f"pixverse_{timestamp}.mp4"
-                                            local_path = download_and_save_file(video_url, filename, "video")
+                                            
+                                            if video_url:
+                                                st.write(f"🔗 **URL del video:** {video_url}")
+                                                st.info("💾 Descargando video para conservar acceso...")
+                                                local_path = download_and_save_file(video_url, filename, "video")
+                                                
+                                                if local_path:
+                                                    st.success(f"✅ Video guardado: `{filename}`")
+                                                else:
+                                                    st.warning("⚠️ La descarga falló, pero la URL puede funcionar temporalmente")
                                             
                                         except Exception as url_error:
                                             st.error(f"❌ Error al procesar URL: {str(url_error)}")
                                             st.code(f"Output recibido: {type(output)} - {str(output)[:200]}")
-                                            video_url = None
-                                            local_path = None
                                         
-                                        # Guardar en historial solo si tenemos URL válida
-                                        if video_url:
+                                        # Calcular units estimadas para Pixverse basado en duración y resolución
+                                        duration_num = params.get('duration', 5)
+                                        quality = params.get('quality', '720p')
+                                        
+                                        # Estimar units basado en duración y resolución
+                                        base_units = duration_num * 6  # Base: 6 units por segundo
+                                        if '1080p' in quality:
+                                            estimated_units = base_units * 1.5  # 50% más para 1080p
+                                        elif '540p' in quality:
+                                            estimated_units = base_units * 0.7  # 30% menos para 540p
+                                        else:  # 720p
+                                            estimated_units = base_units
+                                        
+                                        estimated_units = round(estimated_units, 1)
+                                        
+                                        # Guardar en historial con prioridad al archivo local
+                                        if video_url or local_path:
                                             history_item = {
                                                 "tipo": "video",
                                                 "fecha": datetime.now().isoformat(),
@@ -985,19 +1086,27 @@ with tab1:
                                                 "archivo_local": filename if local_path else None,
                                                 "parametros": params,
                                                 "modelo": "Pixverse",
-                                                "id_prediccion": "N/A (output directo)"
+                                                "id_prediccion": "N/A (output directo)",
+                                                "video_duration": duration_num,  # Duración real del video
+                                                "pixverse_units": estimated_units,  # Units estimadas para cálculo de costo
+                                                "processing_time": None  # No disponible para Pixverse (output directo)
                                             }
                                             save_to_history(history_item)
                                             
-                                            if local_path:
-                                                st.success(f"💾 Video guardado: `{filename}`")
-                                            
-                                            # Mostrar video
+                                            # Mostrar video priorizando archivo local
                                             try:
-                                                st.video(video_url)
+                                                if local_path and local_path.exists():
+                                                    st.info("🎬 Reproduciendo desde archivo local (más confiable)")
+                                                    st.video(str(local_path))
+                                                elif video_url:
+                                                    st.warning("⚠️ Reproduciendo desde URL externa (puede expirar)")
+                                                    st.video(video_url)
+                                                else:
+                                                    st.error("❌ No hay fuente disponible para reproducir")
                                             except Exception as video_error:
-                                                st.warning(f"⚠️ No se pudo mostrar el video: {str(video_error)}")
-                                                st.markdown(f'<a href="{video_url}" target="_blank">🔗 Ver video en nueva pestaña</a>', unsafe_allow_html=True)
+                                                st.warning(f"⚠️ Error al reproducir: {str(video_error)}")
+                                                if video_url:
+                                                    st.markdown(f'<a href="{video_url}" target="_blank">🔗 Intentar ver en nueva pestaña</a>', unsafe_allow_html=True)
                                         else:
                                             st.error("❌ No se pudo obtener URL del video")
                                     else:
@@ -1097,7 +1206,10 @@ with tab1:
                                             filename = f"sticker_{timestamp}.png"
                                             local_path = download_and_save_file(sticker_url, filename, "sticker")
                                             
-                                            # Guardar en historial
+                                            # Calcular tiempo de procesamiento
+                                            processing_time = time.time() - start_time
+                                            
+                                            # Guardar en historial con información adicional para cálculo de costos
                                             history_item = {
                                                 "tipo": "sticker",
                                                 "fecha": datetime.now().isoformat(),
@@ -1106,7 +1218,9 @@ with tab1:
                                                 "url": sticker_url,
                                                 "archivo_local": filename if local_path else None,
                                                 "parametros": params,
-                                                "id_prediccion": prediction.id
+                                                "id_prediccion": prediction.id,
+                                                "processing_time": processing_time,  # Tiempo real de procesamiento
+                                                "modelo": "Flux Pro Stickers"  # Modelo específico para identificación
                                             }
                                             save_to_history(history_item)
                                             
@@ -1152,16 +1266,74 @@ with tab1:
                 with open("generation_stats.json", "r", encoding="utf-8") as f:
                     stats = json.load(f)
                 
-                st.subheader("📈 Estadísticas")
-                for model, data in stats.items():
+                st.subheader("📈 Estadísticas de Rendimiento")
+                
+                # Crear métricas visuales compactas y modernas para cada modelo
+                models_data = list(stats.items())
+                
+                for i, (model, data) in enumerate(models_data):
                     success_rate = (data["exitosas"] / data["total"] * 100) if data["total"] > 0 else 0
-                    st.write(f"**{model}:**")
-                    st.write(f"- Total: {data['total']}")
-                    st.write(f"- Exitosas: {data['exitosas']}")
-                    st.write(f"- Éxito: {success_rate:.1f}%")
-                    if data["tiempo_promedio"] > 0:
-                        st.write(f"- Tiempo promedio: {data['tiempo_promedio']:.1f}s")
-                    st.write("---")
+                    avg_time = data.get("tiempo_promedio", 0)
+                    
+                    # Determinar icono basado en el modelo
+                    if "flux" in model.lower():
+                        model_icon = "🖼️"
+                        model_name = "Flux Pro"
+                        bg_color = "#667eea"
+                    elif "kandinsky" in model.lower():
+                        model_icon = "🎨"
+                        model_name = "Kandinsky"
+                        bg_color = "#f093fb"
+                    elif "ssd" in model.lower():
+                        model_icon = "⚡"
+                        model_name = "SSD-1B"
+                        bg_color = "#ffc107"
+                    elif "veo" in model.lower():
+                        model_icon = "🚀"
+                        model_name = "VEO 3"
+                        bg_color = "#4ECDC4"
+                    elif "pixverse" in model.lower():
+                        model_icon = "🎭"
+                        model_name = "Pixverse"
+                        bg_color = "#A8E6CF"
+                    elif "seedance" in model.lower():
+                        model_icon = "🎬"
+                        model_name = "Seedance"
+                        bg_color = "#FF6B6B"
+                    elif "sticker" in model.lower():
+                        model_icon = "🏷️"
+                        model_name = "Stickers"
+                        bg_color = "#84fab0"
+                    else:
+                        model_icon = "📊"
+                        model_name = model.title()
+                        bg_color = "#667eea"
+                    
+                    # Determinar color de la tasa de éxito
+                    if success_rate >= 90:
+                        success_color = "#28a745"
+                        success_emoji = "🟢"
+                    elif success_rate >= 70:
+                        success_color = "#fd7e14"
+                        success_emoji = "🟡"
+                    else:
+                        success_color = "#dc3545"
+                        success_emoji = "🔴"
+                    
+                    # Crear la tarjeta usando columnas de Streamlit
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background: {bg_color}; padding: 12px; border-radius: 10px; margin: 8px 0; color: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: bold;">{model_icon} {model_name}</span>
+                                <span style="font-size: 20px; font-weight: bold;">{data["total"]}</span>
+                            </div>
+                            <div style="margin-top: 8px; display: flex; justify-content: space-between; font-size: 12px;">
+                                <span>{success_emoji} {success_rate:.1f}% éxito</span>
+                                <span>⏱️ {avg_time:.1f}s</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
             
             # Enlaces útiles
             st.subheader("🔗 Enlaces")
@@ -1173,302 +1345,919 @@ with tab1:
             st.markdown("[🚀 Documentación VEO 3 Fast](https://replicate.com/fofr/veo-3-fast)")
             st.markdown("[🏷️ Documentación Stickers](https://replicate.com/fofr/sticker-maker)")
 
-# Sección de historial avanzado
-with tab2:
-    st.header("� Historial de Generaciones")
-    
+    # Sección de historial avanzado
+    with tab2:
+        st.header("📊 Historial de Generaciones")
+        
+        history = load_history()
+        
+        if history:
+            # Calcular estadísticas generales - corregir detección de tipos de video
+            total_items = len(history)
+            total_imagenes = len([h for h in history if h.get('tipo') == 'imagen'])
+            
+            # Detectar videos por tipo o archivo_local (algunos tienen tipo "video_seedance" incorrecto)
+            total_videos_seedance = len([h for h in history if 
+                (h.get('tipo') == 'video' and ('seedance' in h.get('archivo_local', '').lower() or 'seedance' in h.get('modelo', '').lower())) or
+                h.get('tipo') == 'video_seedance'
+            ])
+            total_videos_anime = len([h for h in history if 
+                h.get('tipo') == 'video' and ('pixverse' in h.get('archivo_local', '').lower() or 'pixverse' in h.get('modelo', '').lower())
+            ])
+            total_videos_veo = len([h for h in history if 
+                h.get('tipo') == 'video' and ('veo3' in h.get('archivo_local', '').lower() or 'veo' in h.get('modelo', '').lower())
+            ])
+            total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
+            
+            # Tarifas reales por unidad extraídas de la factura de Replicate
+            cost_rates = {
+                'imagen': {
+                    'flux_pro': {'rate': 0.055, 'unit': 'imagen'},      # $0.055 por imagen
+                    'kandinsky': {'rate': 0.0014, 'unit': 'segundo'},   # $0.0014 por segundo  
+                    'ssd_1b': {'rate': 0.000975, 'unit': 'segundo'}     # $0.000975 por segundo
+                },
+                'video': {
+                    'seedance': {'rate': 0.15, 'unit': 'segundo'},      # $0.15 por segundo
+                    'pixverse': {'rate': 0.010, 'unit': 'unit'},        # $0.010 por unit (calculado por duración/resolución)
+                    'veo3': {'rate': 0.40, 'unit': 'segundo'}           # $0.40 por segundo
+                },
+                'sticker': {'rate': 0.055, 'unit': 'sticker'}           # $0.055 por sticker
+            }
+            
+            def calculate_item_cost(item):
+                """Calcular el costo de un item individual basado en sus características reales"""
+                item_type = item.get('tipo', 'imagen')
+                archivo_local = item.get('archivo_local', '')
+                modelo = item.get('modelo', '').lower()
+                parametros = item.get('parametros', {})
+                
+                # Normalizar tipos de video incorrectos
+                if item_type == 'video_seedance':
+                    item_type = 'video'
+                elif item_type == 'video_anime':
+                    item_type = 'video'
+                
+                # Variables para el cálculo
+                cost = 0
+                model_info = ""
+                calculation_details = ""
+                
+                if item_type == 'imagen':
+                    # Detectar modelo de imagen
+                    if 'kandinsky' in archivo_local.lower() or 'kandinsky' in modelo:
+                        model_key = 'kandinsky'
+                        # Usar tiempo guardado o estimar basado en parámetros
+                        seconds = item.get('processing_time', 12)  # Tiempo real si está guardado
+                        if 'num_inference_steps' in parametros:
+                            # Estimar basado en steps (más steps = más tiempo)
+                            steps = parametros['num_inference_steps']
+                            seconds = max(8, min(15, steps * 0.4))  # Entre 8-15 segundos según steps
+                        cost = cost_rates['imagen'][model_key]['rate'] * seconds
+                        model_info = f"Kandinsky ({seconds:.1f}s)"
+                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} × {seconds:.1f}s"
+                        
+                    elif 'ssd' in archivo_local.lower() or 'ssd' in modelo:
+                        model_key = 'ssd_1b'
+                        # Usar tiempo guardado o estimar basado en parámetros
+                        seconds = item.get('processing_time', 6)  # Tiempo real si está guardado
+                        if 'num_inference_steps' in parametros:
+                            steps = parametros['num_inference_steps']
+                            seconds = max(4, min(10, steps * 0.2))  # Entre 4-10 segundos según steps
+                        cost = cost_rates['imagen'][model_key]['rate'] * seconds
+                        model_info = f"SSD-1B ({seconds:.1f}s)"
+                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} × {seconds:.1f}s"
+                        
+                    else:  # Flux Pro por defecto
+                        model_key = 'flux_pro'
+                        cost = cost_rates['imagen'][model_key]['rate']
+                        model_info = "Flux Pro"
+                        calculation_details = f"${cost_rates['imagen'][model_key]['rate']} por imagen"
+                        
+                elif item_type == 'video':
+                    # Detectar modelo de video
+                    if 'seedance' in archivo_local.lower() or 'seedance' in modelo:
+                        model_key = 'seedance'
+                        # Usar duración guardada o estimar (generalmente 5 segundos)
+                        seconds = item.get('video_duration', 5)
+                        cost = cost_rates['video'][model_key]['rate'] * seconds
+                        model_info = f"Seedance ({seconds}s)"
+                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
+                        
+                    elif 'pixverse' in archivo_local.lower() or 'pixverse' in modelo:
+                        model_key = 'pixverse'
+                        # Para Pixverse usar units calculadas por duración y resolución
+                        units = item.get('pixverse_units', 1)  # Units reales si están guardadas
+                        
+                        # Si no tenemos units guardadas, estimar basado en parámetros
+                        if units == 1 and parametros:
+                            # Estimar units basado en duración y resolución
+                            duration = parametros.get('duration', '5s')
+                            resolution = parametros.get('resolution', '720p')
+                            
+                            # Convertir duración a número
+                            duration_num = 5  # Por defecto
+                            if isinstance(duration, str) and duration.endswith('s'):
+                                duration_num = int(duration[:-1])
+                            elif isinstance(duration, (int, float)):
+                                duration_num = duration
+                            
+                            # Calcular units basado en duración y resolución
+                            base_units = duration_num * 6  # Base: 6 units por segundo
+                            if '1080p' in str(resolution):
+                                units = base_units * 1.5  # 50% más para 1080p
+                            elif '540p' in str(resolution):
+                                units = base_units * 0.7  # 30% menos para 540p
+                            else:  # 720p
+                                units = base_units
+                            
+                            units = round(units, 1)
+                        
+                        cost = cost_rates['video'][model_key]['rate'] * units
+                        model_info = f"Pixverse ({units} units)"
+                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {units} units"
+                        
+                    elif 'veo3' in archivo_local.lower() or 'veo' in modelo:
+                        model_key = 'veo3'
+                        # Usar duración guardada o estimar (generalmente 5 segundos)
+                        seconds = item.get('video_duration', 5)
+                        cost = cost_rates['video'][model_key]['rate'] * seconds
+                        model_info = f"VEO 3 Fast ({seconds}s)"
+                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
+                        
+                    else:
+                        # Video genérico - usar Seedance como default
+                        model_key = 'seedance'
+                        seconds = item.get('video_duration', 5)
+                        cost = cost_rates['video'][model_key]['rate'] * seconds
+                        model_info = f"Video genérico ({seconds}s)"
+                        calculation_details = f"${cost_rates['video'][model_key]['rate']} × {seconds}s"
+                        
+                elif item_type == 'sticker':
+                    cost = cost_rates['sticker']['rate']
+                    model_info = "Sticker Flux Pro"
+                    calculation_details = f"${cost_rates['sticker']['rate']} por sticker"
+                
+                return cost, model_info, calculation_details
+            
+            # Calcular costo total
+            total_cost_usd = 0
+            cost_breakdown = []
+            
+            for item in history:
+                item_cost, model_info, calculation_details = calculate_item_cost(item)
+                total_cost_usd += item_cost
+                cost_breakdown.append({
+                    'fecha': item.get('fecha', ''),
+                    'modelo': model_info,
+                    'costo': item_cost,
+                    'calculo': calculation_details
+                })
+            
+            total_cost_eur = total_cost_usd * 0.92  # Conversión aproximada
+            
+            # Mostrar métricas de resumen con diseño visual mejorado
+            st.markdown("### 📊 Resumen de Actividad")
+            
+            # Primera fila de métricas principales
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+                ">
+                    <div style="font-size: 14px; margin-bottom: 5px;">🖼️ IMÁGENES</div>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_imagenes}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Generadas</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                total_videos = total_videos_seedance + total_videos_anime + total_videos_veo
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(78,205,196,0.3);
+                ">
+                    <div style="font-size: 14px; margin-bottom: 5px;">🎬 VIDEOS</div>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_videos}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Generados</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #A8E6CF, #7FB069);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(168,230,207,0.3);
+                ">
+                    <div style="font-size: 14px; margin-bottom: 5px;">🏷️ STICKERS</div>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_stickers}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Generados</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Segunda fila con costos y total
+            col4, col5, col6 = st.columns(3)
+            
+            with col4:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+                ">
+                    <div style="font-size: 14px; margin-bottom: 5px;">📈 TOTAL</div>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_items}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Generaciones</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col5:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #f093fb, #f5576c);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(240,147,251,0.3);
+                ">
+                    <div style="font-size: 16px; margin-bottom: 5px; font-weight: bold;">💰 COSTO USD</div>
+                    <div style="font-size: 42px; font-weight: bold; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${total_cost_usd:.2f}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Costo Total Estimado</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col6:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #ffecd2, #fcb69f);
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    color: #8B4513;
+                    box-shadow: 0 4px 15px rgba(255,236,210,0.3);
+                ">
+                    <div style="font-size: 16px; margin-bottom: 5px; font-weight: bold;">💶 COSTO EUR</div>
+                    <div style="font-size: 42px; font-weight: bold; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">€{total_cost_eur:.2f}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Costo Total Estimado</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            
+            # Filtros avanzados
+            st.subheader("🔍 Filtros")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                filter_type = st.selectbox(
+                    "Filtrar por tipo:",
+                    ["Todos", "imagen", "video", "sticker", "media"]
+                )
+            
+            with col2:
+                search_prompt = st.text_input(
+                    "Buscar en prompts:",
+                    placeholder="Escribe palabras clave..."
+                )
+            
+            with col3:
+                show_count = st.selectbox(
+                    "Total de generaciones",
+                    [10, 20, 50, 100, "Todos"],
+                    index=1
+                )
+            
+            # Aplicar filtros
+            filtered_history = history.copy()
+            
+            # Filtro por tipo
+            if filter_type != "Todos":
+                filtered_history = [item for item in filtered_history if item.get("tipo") == filter_type]
+            
+            # Filtro por búsqueda en prompt
+            if search_prompt:
+                search_terms = search_prompt.lower().split()
+                filtered_history = [
+                    item for item in filtered_history 
+                    if any(term in item.get('prompt', '').lower() for term in search_terms)
+                ]
+            
+            # Ordenar por fecha (más reciente primero)
+            filtered_history.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+            
+            # Limitar cantidad si no es "Todos"
+            if show_count != "Todos":
+                filtered_history = filtered_history[:show_count]
+            
+            st.subheader(f"📋 Resultados ({len(filtered_history)} elementos)")
+            
+            # Mostrar elementos del historial con diseño avanzado
+            for i, item in enumerate(filtered_history):
+                # Obtener información del elemento
+                fecha = item.get('fecha', 'Sin fecha')
+                prompt = item.get('prompt', 'Sin prompt')
+                plantilla = item.get('plantilla', 'Sin plantilla')
+                tipo = item.get('tipo', 'Unknown').title()
+                url = item.get('url', '')
+                archivo_local = item.get('archivo_local', '')
+                parametros = item.get('parametros', {})
+                id_prediccion = item.get('id_prediccion', '')
+                modelo = item.get('modelo', '')
+                
+                # Asignar icono según el tipo y modelo
+                if tipo.lower() == 'imagen':
+                    if 'kandinsky' in archivo_local.lower() if archivo_local else False:
+                        icon = "🎨"
+                    elif 'ssd' in archivo_local.lower() if archivo_local else False:
+                        icon = "⚡"
+                    else:
+                        icon = "🖼️"  # Flux Pro por defecto
+                elif tipo.lower() == 'video':
+                    if 'seedance' in archivo_local.lower() if archivo_local else False:
+                        icon = "🎬"
+                    elif 'pixverse' in archivo_local.lower() if archivo_local else False:
+                        icon = "🎭"
+                    elif modelo == "VEO 3 Fast" or 'veo3' in archivo_local.lower() if archivo_local else False:
+                        icon = "🚀"
+                    else:
+                        icon = "📹"  # Video genérico
+                elif tipo.lower() == 'sticker':
+                    icon = "🏷️"
+                elif tipo.lower() == 'media':
+                    icon = "📄"
+                else:
+                    icon = "📄"  # Por defecto
+                
+                # Crear expandible con información resumida
+                fecha_formatted = fecha[:16] if len(fecha) > 16 else fecha
+                prompt_preview = prompt[:50] + "..." if len(prompt) > 50 else prompt
+                
+                with st.expander(f"{icon} {fecha_formatted} - {prompt_preview}", expanded=False):
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        # Información básica
+                        st.write(f"**Tipo:** {tipo}")
+                        
+                        # Prompt completo en área expandible
+                        with st.expander("📝 Prompt completo", expanded=False):
+                            st.text_area("Prompt:", value=prompt, height=100, disabled=True, key=f"prompt_{i}", label_visibility="collapsed")
+                        
+                        st.write(f"**Plantilla:** {plantilla}")
+                        
+                        # Parámetros técnicos
+                        if parametros:
+                            with st.expander("⚙️ Ver parámetros", expanded=False):
+                                for key, value in parametros.items():
+                                    st.write(f"**{key}:** {value}")
+                        
+                        # Estadísticas y costos
+                        with st.expander("📊 Estadísticas y Costos", expanded=True):
+                            # Calcular costo específico del item usando la función mejorada
+                            item_cost, model_info, calculation_details = calculate_item_cost(item)
+                            
+                            col_stats1, col_stats2 = st.columns(2)
+                            with col_stats1:
+                                # Información técnica específica por tipo
+                                if 'width' in parametros and 'height' in parametros:
+                                    resolution = f"{parametros['width']}x{parametros['height']}"
+                                    megapixels = (parametros['width'] * parametros['height']) / 1_000_000
+                                    st.write(f"🔍 **Resolución:** {resolution}")
+                                    st.write(f"🔢 **Megapíxeles:** {megapixels:.2f} MP")
+                                
+                                # Información de video - duración y quality
+                                if tipo.lower() == 'video':
+                                    if 'duration' in parametros:
+                                        st.write(f"⏱️ **Duración:** {parametros['duration']}s")
+                                    elif item.get('video_duration'):
+                                        st.write(f"⏱️ **Duración:** {item.get('video_duration')}s")
+                                    
+                                    if 'quality' in parametros:
+                                        st.write(f"📺 **Calidad:** {parametros['quality']}")
+                                    
+                                    # Mostrar units de Pixverse si están disponibles
+                                    if item.get('pixverse_units'):
+                                        st.write(f"🎯 **Pixverse Units:** {item.get('pixverse_units')}")
+                                
+                                # Información de procesamiento
+                                if item.get('processing_time'):
+                                    st.write(f"⚡ **Tiempo de procesamiento:** {item.get('processing_time'):.1f}s")
+                                
+                                if 'steps' in parametros:
+                                    st.write(f"⚙️ **Pasos de procesamiento:** {parametros['steps']}")
+                                elif 'num_inference_steps' in parametros:
+                                    st.write(f"⚙️ **Pasos de procesamiento:** {parametros['num_inference_steps']}")
+                            
+                            with col_stats2:
+                                st.markdown(f"### 💰 **${item_cost:.3f}**")
+                                st.caption("Costo estimado USD")
+                                st.markdown(f"### 💶 **€{item_cost * 0.92:.3f}**")
+                                st.caption("Costo estimado EUR")
+                                
+                                # Mostrar detalles del cálculo
+                                st.caption(f"🔢 **Modelo:** {model_info}")
+                                st.caption(f"📊 **Cálculo:** {calculation_details}")
+                                
+                                if 'aspect_ratio' in parametros:
+                                    st.write(f"📐 **Relación de aspecto:** {parametros['aspect_ratio']}")
+                        
+                        # Información técnica
+                        col_tech1, col_tech2 = st.columns(2)
+                        with col_tech1:
+                            st.write(f"📅 **Fecha de creación:** {fecha[:10]}")
+                            st.write(f"🕐 **Hora de creación:** {fecha[11:19] if len(fecha) > 11 else 'N/A'}")
+                        
+                        with col_tech2:
+                            if fecha:
+                                try:
+                                    fecha_obj = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
+                                    ahora = datetime.now()
+                                    diferencia = ahora - fecha_obj.replace(tzinfo=None)
+                                    
+                                    if diferencia.days > 0:
+                                        antiguedad = f"{diferencia.days} días"
+                                    elif diferencia.seconds > 3600:
+                                        antiguedad = f"{diferencia.seconds // 3600} horas"
+                                    else:
+                                        antiguedad = f"{diferencia.seconds // 60} minutos"
+                                    
+                                    st.write(f"⏰ **Antigüedad:** {antiguedad}")
+                                except:
+                                    st.write(f"⏰ **Antigüedad:** No calculable")
+                        
+                        if id_prediccion:
+                            st.code(f"🆔 ID de predicción: {id_prediccion}")
+                    
+                    with col2:
+                        # Preview y botones de acción - priorizar archivo local para videos
+                        archivo_local = item.get('archivo_local')
+                        local_path = HISTORY_DIR / archivo_local if archivo_local else None
+                        
+                        # Mostrar preview priorizando archivo local
+                        preview_shown = False
+                        if archivo_local and local_path and local_path.exists():
+                            try:
+                                if tipo.lower() in ['imagen', 'sticker']:
+                                    st.image(str(local_path), caption="Preview (Local)", use_container_width=True)
+                                elif tipo.lower() == 'video':
+                                    st.video(str(local_path))
+                                    st.caption("🎬 Reproduciendo desde archivo local")
+                                preview_shown = True
+                            except Exception as e:
+                                st.warning(f"⚠️ Error con archivo local: {str(e)[:30]}...")
+                        
+                        # Si no se pudo mostrar desde archivo local, intentar URL
+                        if not preview_shown and url:
+                            try:
+                                if tipo.lower() in ['imagen', 'sticker']:
+                                    st.image(url, caption="Preview", use_container_width=True)
+                                elif tipo.lower() == 'video':
+                                    # Mejor visualización para videos en el historial
+                                    st.markdown(f"""
+                                    <div style="text-align: center; margin: 10px 0;">
+                                        <video width="100%" height="250" controls style="border-radius: 8px;">
+                                            <source src="{url}" type="video/mp4">
+                                            <source src="{url}" type="video/webm">
+                                            Tu navegador no soporta el elemento video.
+                                        </video>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    st.caption("🌐 Reproduciendo desde URL externa")
+                            except Exception as e:
+                                st.warning("🖼️ Preview no disponible")
+                                st.caption(f"Error: {str(e)[:50]}...")
+                        
+                        # Botones de acción estandarizados - siempre dos botones
+                        col_btn1, col_btn2 = st.columns(2)
+                        
+                        with col_btn1:
+                            # Botón archivo local
+                            if archivo_local:
+                                local_path = HISTORY_DIR / archivo_local
+                                if local_path.exists():
+                                    if st.button("📁 Archivo Local", key=f"local_{i}", use_container_width=True, type="primary"):
+                                        import subprocess
+                                        import os
+                                        # Abrir el archivo con el programa predeterminado del sistema
+                                        if os.name == 'nt':  # Windows
+                                            os.startfile(str(local_path))
+                                        elif os.name == 'posix':  # macOS y Linux
+                                            subprocess.call(['open' if 'darwin' in os.uname().sysname.lower() else 'xdg-open', str(local_path)])
+                                else:
+                                    st.button("📁 Local No Disponible", disabled=True, use_container_width=True, help="El archivo local no existe")
+                            else:
+                                st.button("� Sin Archivo Local", disabled=True, use_container_width=True, help="No hay archivo local guardado")
+                        
+                        with col_btn2:
+                            # Botón URL Replicate
+                            if url:
+                                # Determinar el texto del botón según el tipo
+                                if tipo.lower() == 'video':
+                                    st.link_button("🔗 Ver en Replicate", url, use_container_width=True)
+                                else:
+                                    st.link_button("🔗 Ver en Replicate", url, use_container_width=True)
+                            else:
+                                st.button("🔗 Sin URL Replicate", disabled=True, use_container_width=True, help="No hay URL de Replicate disponible")
+                        
+                        # Indicadores de estado
+                        if archivo_local and (HISTORY_DIR / archivo_local).exists():
+                            st.success("🟢 Archivo disponible localmente")
+                        else:
+                            st.info("� Solo disponible en Replicate")
+                        
+                        # Información del archivo
+                        if archivo_local:
+                            st.caption(f"📄 **Archivo:** {archivo_local}")
+                    
+                    st.divider()
+            
+            # Información adicional
+            if filtered_history:
+                st.info(f"📈 **Total mostrado:** {len(filtered_history)} de {total_items} generaciones")
+            
+        else:
+            st.info("📝 No hay elementos en el historial aún. ¡Genera tu primer contenido!")
+
+elif st.session_state.current_page == 'biblioteca':
+    # PÁGINA DE LA BIBLIOTECA
+    # Cargar historial para la biblioteca
     history = load_history()
     
     if history:
-        # Calcular estadísticas generales
+        # CONTENIDO PRINCIPAL
+        # Estadísticas rápidas en la parte superior
+        stats_col1, stats_col2, stats_col3, stats_col4 = st.columns(4)
         total_items = len(history)
         total_imagenes = len([h for h in history if h.get('tipo') == 'imagen'])
-        total_videos_seedance = len([h for h in history if h.get('tipo') == 'video' and 'seedance' in h.get('archivo_local', '').lower()])
-        total_videos_anime = len([h for h in history if h.get('tipo') == 'video' and 'pixverse' in h.get('archivo_local', '').lower()])
-        total_videos_veo = len([h for h in history if h.get('tipo') == 'video' and 'veo3' in h.get('archivo_local', '').lower()])
+        total_videos = len([h for h in history if h.get('tipo') == 'video'])
         total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
+        total_cost_usd = sum(0.052 if h.get('tipo') in ['imagen', 'sticker'] else 0.15 for h in history)
         
-        # Calcular costos estimados (precios aproximados por generación)
-        cost_per_item = {
-            'imagen': 0.052,  # USD por imagen Flux Pro
-            'video': 0.15,    # USD por video
-            'sticker': 0.052  # USD por sticker
-        }
-        
-        total_cost_usd = 0
-        for item in history:
-            item_type = item.get('tipo', 'imagen')
-            if item_type in cost_per_item:
-                total_cost_usd += cost_per_item[item_type]
-        
-        total_cost_eur = total_cost_usd * 0.92  # Conversión aproximada
-        
-        # Mostrar métricas de resumen
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with col1:
-            st.metric(
-                label="🖼️ Imágenes",
-                value=total_imagenes
-            )
-        
-        with col2:
-            st.metric(
-                label="🎬 Videos Seedance", 
-                value=total_videos_seedance
-            )
-        
-        with col3:
-            st.metric(
-                label="🎭 Videos Anime",
-                value=total_videos_anime
-            )
-        
-        with col4:
-            st.metric(
-                label="💰 Costo Total (USD)",
-                value=f"${total_cost_usd:.2f}"
-            )
-        
-        with col5:
-            st.metric(
-                label="💶 Costo Total (EUR)",
-                value=f"€{total_cost_eur:.2f}"
-            )
+        with stats_col1:
+            st.metric("📊 Total", total_items)
+        with stats_col2:
+            st.metric("🖼️ Imágenes", total_imagenes)
+        with stats_col3:
+            st.metric("🎬 Videos", total_videos)
+        with stats_col4:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 10px; color: white;">
+                <div style="font-size: 14px; opacity: 0.9;">💰 COSTO TOTAL</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 8px 0;">${total_cost_usd:.2f}</div>
+                <div style="font-size: 12px; opacity: 0.8;">Estimado USD</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.divider()
         
-        # Filtros avanzados
-        st.subheader("🔍 Filtros")
-        col1, col2, col3 = st.columns(3)
+        # Filtros rápidos
+        filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
         
-        with col1:
-            filter_type = st.selectbox(
-                "Filtrar por tipo:",
-                ["Todos", "imagen", "video", "sticker", "media"]
-            )
+        with filter_col1:
+            filter_type = st.selectbox("Filtrar por tipo:", ["Todos", "imagen", "video", "sticker"])
         
-        with col2:
-            search_prompt = st.text_input(
-                "Buscar en prompts:",
-                placeholder="Escribe palabras clave..."
-            )
+        with filter_col2:
+            sort_order = st.selectbox("Ordenar por:", ["Más reciente", "Más antiguo", "Tipo"])
         
-        with col3:
-            show_count = st.selectbox(
-                "Total de generaciones",
-                [10, 20, 50, 100, "Todos"],
-                index=1
-            )
+        with filter_col3:
+            items_per_row = st.slider("Items por fila:", 2, 6, 3)
+        
+        with filter_col4:
+            image_size = st.selectbox("Tamaño de vista previa:", ["Pequeño", "Mediano", "Grande", "Extra Grande"], index=1)
         
         # Aplicar filtros
-        filtered_history = history.copy()
+        filtered_items = history.copy()
         
-        # Filtro por tipo
         if filter_type != "Todos":
-            filtered_history = [item for item in filtered_history if item.get("tipo") == filter_type]
+            filtered_items = [item for item in filtered_items if item.get('tipo') == filter_type]
         
-        # Filtro por búsqueda en prompt
-        if search_prompt:
-            search_terms = search_prompt.lower().split()
-            filtered_history = [
-                item for item in filtered_history 
-                if any(term in item.get('prompt', '').lower() for term in search_terms)
-            ]
+        # Ordenar
+        if sort_order == "Más reciente":
+            filtered_items.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+        elif sort_order == "Más antiguo":
+            filtered_items.sort(key=lambda x: x.get("fecha", ""))
+        elif sort_order == "Tipo":
+            filtered_items.sort(key=lambda x: x.get("tipo", ""))
         
-        # Ordenar por fecha (más reciente primero)
-        filtered_history.sort(key=lambda x: x.get("fecha", ""), reverse=True)
-        
-        # Limitar cantidad si no es "Todos"
-        if show_count != "Todos":
-            filtered_history = filtered_history[:show_count]
-        
-        st.subheader(f"📋 Resultados ({len(filtered_history)} elementos)")
-        
-        # Mostrar elementos del historial con diseño avanzado
-        for i, item in enumerate(filtered_history):
-            # Obtener información del elemento
-            fecha = item.get('fecha', 'Sin fecha')
-            prompt = item.get('prompt', 'Sin prompt')
-            plantilla = item.get('plantilla', 'Sin plantilla')
-            tipo = item.get('tipo', 'Unknown').title()
-            url = item.get('url', '')
-            archivo_local = item.get('archivo_local', '')
-            parametros = item.get('parametros', {})
-            id_prediccion = item.get('id_prediccion', '')
-            modelo = item.get('modelo', '')
-            
-            # Asignar icono según el tipo y modelo
-            if tipo.lower() == 'imagen':
-                if 'kandinsky' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎨"
-                elif 'ssd' in archivo_local.lower() if archivo_local else False:
-                    icon = "⚡"
-                else:
-                    icon = "🖼️"  # Flux Pro por defecto
-            elif tipo.lower() == 'video':
-                if 'seedance' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎬"
-                elif 'pixverse' in archivo_local.lower() if archivo_local else False:
-                    icon = "🎭"
-                elif modelo == "VEO 3 Fast" or 'veo3' in archivo_local.lower() if archivo_local else False:
-                    icon = "🚀"
-                else:
-                    icon = "📹"  # Video genérico
-            elif tipo.lower() == 'sticker':
-                icon = "🏷️"
-            elif tipo.lower() == 'media':
-                icon = "📄"
-            else:
-                icon = "📄"  # Por defecto
-            
-            # Crear expandible con información resumida
-            fecha_formatted = fecha[:16] if len(fecha) > 16 else fecha
-            prompt_preview = prompt[:50] + "..." if len(prompt) > 50 else prompt
-            
-            with st.expander(f"{icon} {fecha_formatted} - {prompt_preview}", expanded=False):
-                col1, col2 = st.columns([2, 1])
+        # Mostrar items en grid
+        if filtered_items:
+            # Dividir en filas
+            for i in range(0, len(filtered_items), items_per_row):
+                cols = st.columns(items_per_row)
                 
-                with col1:
-                    # Información básica
-                    st.write(f"**Tipo:** {tipo}")
-                    
-                    # Prompt completo en área expandible
-                    with st.expander("📝 Prompt completo", expanded=False):
-                        st.text_area("", value=prompt, height=100, disabled=True, key=f"prompt_{i}")
-                    
-                    st.write(f"**Plantilla:** {plantilla}")
-                    
-                    # Parámetros técnicos
-                    if parametros:
-                        with st.expander("⚙️ Ver parámetros", expanded=False):
-                            for key, value in parametros.items():
-                                st.write(f"**{key}:** {value}")
-                    
-                    # Estadísticas y costos
-                    with st.expander("📊 Estadísticas y Costos", expanded=False):
-                        item_cost = cost_per_item.get(item.get('tipo', 'imagen'), 0)
+                for j in range(items_per_row):
+                    if i + j < len(filtered_items):
+                        item = filtered_items[i + j]
+                        original_index = history.index(item)
                         
-                        col_stats1, col_stats2 = st.columns(2)
-                        with col_stats1:
-                            if 'width' in parametros and 'height' in parametros:
-                                resolution = f"{parametros['width']}x{parametros['height']}"
-                                megapixels = (parametros['width'] * parametros['height']) / 1_000_000
-                                st.write(f"🔍 **Resolución:** {resolution}")
-                                st.write(f"🔢 **Megapíxeles:** {megapixels:.2f} MP")
-                            
-                            if 'steps' in parametros:
-                                st.write(f"⚙️ **Pasos de procesamiento:** {parametros['steps']}")
-                            elif 'num_inference_steps' in parametros:
-                                st.write(f"⚙️ **Pasos de procesamiento:** {parametros['num_inference_steps']}")
-                        
-                        with col_stats2:
-                            st.write(f"💰 **Costo estimado:** ${item_cost:.3f}")
-                            st.write(f"💶 **Costo en EUR:** €{item_cost * 0.92:.3f}")
-                            
-                            if 'aspect_ratio' in parametros:
-                                st.write(f"📐 **Relación de aspecto:** {parametros['aspect_ratio']}")
-                    
-                    # Información técnica
-                    col_tech1, col_tech2 = st.columns(2)
-                    with col_tech1:
-                        st.write(f"📅 **Fecha de creación:** {fecha[:10]}")
-                        st.write(f"🕐 **Hora de creación:** {fecha[11:19] if len(fecha) > 11 else 'N/A'}")
-                    
-                    with col_tech2:
-                        if fecha:
-                            try:
-                                fecha_obj = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
-                                ahora = datetime.now()
-                                diferencia = ahora - fecha_obj.replace(tzinfo=None)
-                                
-                                if diferencia.days > 0:
-                                    antiguedad = f"{diferencia.days} días"
-                                elif diferencia.seconds > 3600:
-                                    antiguedad = f"{diferencia.seconds // 3600} horas"
-                                else:
-                                    antiguedad = f"{diferencia.seconds // 60} minutos"
-                                
-                                st.write(f"⏰ **Antigüedad:** {antiguedad}")
-                            except:
-                                st.write(f"⏰ **Antigüedad:** No calculable")
-                    
-                    if id_prediccion:
-                        st.code(f"🆔 ID de predicción: {id_prediccion}")
-                
-                with col2:
-                    # Preview y botones de acción
-                    if url:
-                        try:
-                            if tipo.lower() in ['imagen', 'sticker']:
-                                st.image(url, caption="Preview", use_container_width=True)
-                            elif tipo.lower() == 'video':
-                                st.video(url)
-                        except Exception as e:
-                            st.warning("🖼️ Preview no disponible")
-                            st.caption(f"Error: {str(e)[:50]}...")
-                    
-                    # Botones de acción con colores llamativos
-                    if url:
-                        st.markdown(f"""
-                        <div style="margin: 10px 0;">
-                            <a href="{url}" target="_blank" style="text-decoration: none;">
-                                <button style="
-                                    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-                                    color: white;
-                                    padding: 12px 20px;
-                                    border: none;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    font-size: 14px;
-                                    font-weight: bold;
-                                    width: 100%;
-                                    margin-bottom: 8px;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                                    transition: all 0.3s ease;
-                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                    🔗 Ver Online (Replicate)
-                                </button>
-                            </a>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    if archivo_local:
-                        local_path = HISTORY_DIR / archivo_local
-                        if local_path.exists():
+                        with cols[j]:
+                            # Card del item
                             st.markdown(f"""
-                            <div style="margin: 10px 0;">
-                                <button style="
-                                    background: linear-gradient(45deg, #4dabf7, #74c0fc);
-                                    color: white;
-                                    padding: 12px 20px;
-                                    border: none;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    font-size: 14px;
-                                    font-weight: bold;
-                                    width: 100%;
-                                    margin-bottom: 8px;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                                ">
-                                    � Ver Local
-                                </button>
+                            <div style="
+                                border: 2px solid #e0e0e0;
+                                border-radius: 10px;
+                                padding: 10px;
+                                margin: 5px 0;
+                                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                            ">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <h6 style="margin: 0; color: #2c3e50; font-size: 14px; font-weight: 600;">
+                                        {item.get('tipo', 'Item').title()} #{original_index + 1}
+                                    </h6>
+                                    <p style="margin: 0; font-size: 11px; color: #666;">
+                                        📅 {item.get('fecha', 'N/A')[:10]} | 🔗 {item.get('modelo', 'Modelo desconocido')[:15]}{'...' if len(item.get('modelo', 'Modelo desconocido')) > 15 else ''}
+                                    </p>
+                                </div>
                             </div>
                             """, unsafe_allow_html=True)
                             
-                            st.success("🟢 Archivo disponible localmente")
-                        else:
-                            st.error("🔴 Archivo local no encontrado")
-                    
-                    # Información del archivo
-                    if archivo_local:
-                        st.caption(f"� **Archivo:** {archivo_local}")
+                            # Mostrar preview de la imagen/video
+                            url = item.get('url')
+                            archivo_local = item.get('archivo_local')
+                            
+                            # Priorizar archivo local para videos de Pixverse y VEO que pueden tener URLs expiradas
+                            if archivo_local:
+                                local_path = HISTORY_DIR / archivo_local
+                                if local_path.exists():
+                                    try:
+                                        if item.get('tipo') == 'video':
+                                            # Para archivos locales, usar st.video funciona mejor
+                                            st.video(str(local_path))
+                                            st.success(f"🎬 Reproduciendo desde archivo local: {archivo_local}")
+                                        else:
+                                            st.image(str(local_path), use_container_width=True)
+                                    except Exception as e:
+                                        st.markdown(f"""
+                                        <div style="
+                                            background: #f8f9fa;
+                                            border: 2px dashed #dee2e6;
+                                            border-radius: 10px;
+                                            padding: 20px;
+                                            text-align: center;
+                                        ">
+                                            <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
+                                            <div style="color: #6c757d;">Video local: {archivo_local}</div>
+                                            <div style="color: #dc3545; font-size: 12px;">Error: {str(e)[:50]}</div>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                else:
+                                    # Archivo local no existe, intentar con URL
+                                    if url:
+                                        st.warning(f"⚠️ Archivo local no encontrado: {archivo_local}")
+                                        st.info("🔗 Intentando cargar desde URL externa...")
+                                        try:
+                                            if item.get('tipo') == 'video':
+                                                st.markdown(f"""
+                                                <div style="text-align: center; margin: 20px 0;">
+                                                    <video width="100%" height="400" controls style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                                                        <source src="{url}" type="video/mp4">
+                                                        <source src="{url}" type="video/webm">
+                                                        <source src="{url}" type="video/quicktime">
+                                                        Tu navegador no soporta el elemento video.
+                                                    </video>
+                                                </div>
+                                                """, unsafe_allow_html=True)
+                                            else:
+                                                st.image(url, use_container_width=True)
+                                        except:
+                                            st.error("❌ Tanto el archivo local como la URL externa fallaron")
+                                    else:
+                                        st.warning(f"⚠️ Archivo local no encontrado: {archivo_local}")
+                                        st.error("❌ No hay URL de respaldo disponible")
+                            elif url:
+                                try:
+                                    if item.get('tipo') == 'video':
+                                        # Para videos, usar HTML personalizado para mejor compatibilidad
+                                        st.markdown(f"""
+                                        <div style="text-align: center; margin: 20px 0;">
+                                            <video width="100%" height="400" controls style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                                                <source src="{url}" type="video/mp4">
+                                                <source src="{url}" type="video/webm">
+                                                <source src="{url}" type="video/quicktime">
+                                                Tu navegador no soporta el elemento video.
+                                                <br><br>
+                                                <a href="{url}" target="_blank" style="color: #1f77b4; text-decoration: none;">
+                                                    🔗 Abrir video en nueva pestaña
+                                                </a>
+                                            </video>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                        
+                                        # Advertencia específica para el botón de nueva pestaña
+                                        st.markdown(f"""
+                                        <div style="text-align: center; margin: 10px 0;">
+                                            <a href="{url}" target="_blank" style="
+                                                background: linear-gradient(135deg, #667eea, #764ba2);
+                                                color: white;
+                                                padding: 8px 16px;
+                                                text-decoration: none;
+                                                border-radius: 6px;
+                                                font-size: 14px;
+                                            ">
+                                                🎬 Abrir video en nueva pestaña
+                                            </a>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                    else:
+                                        st.image(url, use_container_width=True)
+                                except Exception as e:
+                                    st.markdown(f"""
+                                    <div style="
+                                        background: #f8f9fa;
+                                        border: 2px dashed #dee2e6;
+                                        border-radius: 10px;
+                                        padding: 20px;
+                                        text-align: center;
+                                        margin: 20px 0;
+                                    ">
+                                        <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
+                                        <div style="color: #6c757d; margin-bottom: 15px;">Vista previa no disponible</div>
+                                        <div style="color: #dc3545; font-size: 12px; margin-bottom: 15px;">Error: {str(e)[:50]}</div>
+                                        <a href="{url}" target="_blank" style="
+                                            background: #007bff;
+                                            color: white;
+                                            padding: 10px 20px;
+                                            text-decoration: none;
+                                            border-radius: 6px;
+                                        ">
+                                            Ver contenido original
+                                        </a>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            else:
+                                st.markdown("❌ Sin preview disponible")
+                            
+                            # Prompt truncado
+                            prompt = item.get('prompt', '')
+                            if prompt:
+                                prompt_preview = prompt[:80] + "..." if len(prompt) > 80 else prompt
+                                st.caption(f"💬 {prompt_preview}")
+                            
+                            # Botón Ver detalles
+                            if st.button("👁️ Ver detalles", key=f"details_{original_index}", use_container_width=True):
+                                st.session_state.selected_item_index = original_index
+                                st.rerun()
+            
+            st.markdown(f"---")
+            st.info(f"📊 Mostrando {len(filtered_items)} de {len(history)} items")
+            
+        else:
+            st.info("🔍 No se encontraron items con los filtros seleccionados")
+        
+        # POPUP DE DETALLES
+        if st.session_state.selected_item_index is not None and st.session_state.selected_item_index < len(history):
+            selected_item = history[st.session_state.selected_item_index]
+            
+            # Crear popup con st.dialog
+            @st.dialog("📋 Detalles del Item", width="large")
+            def show_item_details():
+                # Fila superior: Info básica + Botón cerrar
+                col1, col2, col3 = st.columns([3, 3, 1])
+                with col1:
+                    st.markdown(f"<div style='text-align: center; padding: 8px;'><h5 style='margin: 0; color: #2c3e50;'>🎯 {selected_item.get('tipo', 'N/A').title()}</h5><small style='color: #6c757d;'>📅 {selected_item.get('fecha', 'N/A')[:10]}</small></div>", unsafe_allow_html=True)
+                with col2:
+                    tipo = selected_item.get('tipo', 'imagen')
+                    cost_usd = 0.052 if tipo == 'imagen' or tipo == 'sticker' else 0.15
+                    st.markdown(f"<div style='text-align: center; padding: 8px;'><h5 style='margin: 0; color: #495057;'>🔗 {selected_item.get('modelo', 'N/A')[:15]}</h5><div style='font-size: 18px; font-weight: bold; color: #28a745; margin-top: 5px;'>💰 ${cost_usd:.3f}</div></div>", unsafe_allow_html=True)
+                with col3:
+                    st.markdown("<div style='text-align: center; padding: 8px;'>", unsafe_allow_html=True)
+                    if st.button("❌", key="close_popup", help="Cerrar"):
+                        st.session_state.selected_item_index = None
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
                 
-                st.divider()
-        
-        # Información adicional
-        if filtered_history:
-            st.info(f"📈 **Total mostrado:** {len(filtered_history)} de {total_items} generaciones")
-        
+                # Separador visual
+                st.markdown("<hr style='margin: 10px 0; border: 1px solid #e9ecef;'>", unsafe_allow_html=True)
+                
+                # Fila de datos económicos con fuente más grande y simétrica
+                eco_col1, eco_col2, eco_col3, eco_col4 = st.columns(4)
+                with eco_col1:
+                    cost_eur = cost_usd * 0.92
+                    st.markdown(f"""
+                    <div style='text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin: 4px;'>
+                        <h2 style='margin: 0; color: #28a745; font-weight: bold;'>💵 ${cost_usd:.3f}</h2>
+                        <small style='color: #6c757d; font-weight: 500;'>Costo USD</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with eco_col2:
+                    st.markdown(f"""
+                    <div style='text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin: 4px;'>
+                        <h2 style='margin: 0; color: #007bff; font-weight: bold;'>💶 €{cost_eur:.3f}</h2>
+                        <small style='color: #6c757d; font-weight: 500;'>Costo EUR</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with eco_col3:
+                    plantilla = selected_item.get('plantilla', 'Sin plantilla')
+                    plantilla_short = plantilla[:10] + "..." if len(plantilla) > 10 else plantilla
+                    st.markdown(f"""
+                    <div style='text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin: 4px;'>
+                        <h5 style='margin: 0; color: #6c757d; font-weight: bold;'>🎨 {plantilla_short}</h5>
+                        <small style='color: #6c757d; font-weight: 500;'>Plantilla</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with eco_col4:
+                    fecha = selected_item.get('fecha', '')
+                    if fecha:
+                        try:
+                            fecha_obj = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
+                            ahora = datetime.now()
+                            diferencia = ahora - fecha_obj.replace(tzinfo=None)
+                            if diferencia.days > 0:
+                                antiguedad = f"{diferencia.days}d"
+                            elif diferencia.seconds > 3600:
+                                antiguedad = f"{diferencia.seconds // 3600}h"
+                            else:
+                                antiguedad = f"{diferencia.seconds // 60}m"
+                            st.markdown(f"""
+                            <div style='text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin: 4px;'>
+                                <h5 style='margin: 0; color: #fd7e14; font-weight: bold;'>⏰ {antiguedad}</h5>
+                                <small style='color: #6c757d; font-weight: 500;'>Antigüedad</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        except:
+                            st.markdown(f"""
+                            <div style='text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin: 4px;'>
+                                <h5 style='margin: 0; color: #6c757d; font-weight: bold;'>⏰ N/A</h5>
+                                <small style='color: #6c757d; font-weight: 500;'>Antigüedad</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                
+                # Separador visual
+                st.markdown("<hr style='margin: 10px 0; border: 1px solid #e9ecef;'>", unsafe_allow_html=True)
+                
+                # Prompt en área más pequeña
+                st.markdown("**📝 Prompt:**")
+                st.text_area("", value=selected_item.get('prompt', 'Sin prompt disponible'), height=80, disabled=True, label_visibility="collapsed")
+                
+                # Fila inferior: Botones de acceso estandarizados
+                archivo_local = selected_item.get('archivo_local', '')
+                url = selected_item.get('url', '')
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    # Botón archivo local
+                    if archivo_local:
+                        local_path = HISTORY_DIR / archivo_local
+                        if local_path.exists():
+                            if st.button("📁 Abrir Archivo Local", key="popup_local", use_container_width=True, type="primary"):
+                                import subprocess
+                                import os
+                                # Abrir el archivo con el programa predeterminado del sistema
+                                if os.name == 'nt':  # Windows
+                                    os.startfile(str(local_path))
+                                elif os.name == 'posix':  # macOS y Linux
+                                    subprocess.call(['open' if 'darwin' in os.uname().sysname.lower() else 'xdg-open', str(local_path)])
+                            file_size = local_path.stat().st_size / (1024 * 1024)
+                            st.success(f"📁 Disponible • {file_size:.1f}MB")
+                        else:
+                            st.button("📁 Local No Disponible", disabled=True, use_container_width=True, help="El archivo local no existe")
+                            st.error("❌ Archivo no encontrado")
+                    else:
+                        st.button("📁 Sin Archivo Local", disabled=True, use_container_width=True, help="No hay archivo local guardado")
+                        st.info("📁 No guardado localmente")
+                
+                with col2:
+                    # Botón URL Replicate
+                    if url:
+                        st.link_button("� Ver en Replicate", url, use_container_width=True)
+                        st.success("🔗 URL disponible")
+                    else:
+                        st.button("🔗 Sin URL Replicate", disabled=True, use_container_width=True, help="No hay URL de Replicate disponible")
+                        st.info("🔗 URL no disponible")
+                
+                # Botón de cerrar compacto
+                if st.button("✅ Cerrar", key="close_bottom", use_container_width=True, type="primary"):
+                    st.session_state.selected_item_index = None
+                    st.rerun()
+            
+            # Mostrar el popup
+            show_item_details()
+    
     else:
-        st.info("�📝 No hay elementos en el historial aún. ¡Genera tu primer contenido!")
+        st.info("📝 No hay contenido en la biblioteca aún. ¡Genera tu primer contenido en el Generador!")
+        
+        if st.button("🚀 Ir al Generador"):
+            st.session_state.current_page = 'generator'
+            st.rerun()
