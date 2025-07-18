@@ -75,18 +75,24 @@ def generate_video_pixverse(prompt, **params):
 # Función para generar stickers
 def generate_sticker(prompt, **params):
     # Usar el modelo específico de stickers con la versión correcta
+    # Parámetros por defecto para stickers
+    default_params = {
+        "steps": 17,
+        "width": 1152,
+        "height": 1152,
+        "prompt": prompt,
+        "output_format": "webp",
+        "output_quality": 100,
+        "negative_prompt": "",
+        "number_of_images": 1
+    }
+    
+    # Combinar con parámetros personalizados
+    sticker_params = {**default_params, **params, "prompt": prompt}  # Asegurar que prompt no se sobrescriba
+    
     output = replicate.run(
         "fofr/sticker-maker:4acb778eb059772225ec213948f0660867b2e03f277448f18cf1800b96a65a1a",
-        input={
-            "steps": 17,
-            "width": 1152,
-            "height": 1152,
-            "prompt": prompt,
-            "output_format": "webp",
-            "output_quality": 100,
-            "negative_prompt": "",
-            "number_of_images": 1
-        }
+        input=sticker_params
     )
     return output
 
@@ -439,16 +445,35 @@ with st.sidebar:
         }
         
     else:  # Stickers Flux Pro
-        st.subheader("📎 Parámetros de Sticker")
+        st.subheader("🏷️ Parámetros de Sticker")
         
-        # Parámetros fijos para stickers
+        col1, col2 = st.columns(2)
+        with col1:
+            steps = st.slider("Pasos", min_value=10, max_value=30, value=17, help="Número de pasos de inferencia")
+            width = st.selectbox("Ancho", [512, 768, 1024, 1152], index=3)  # Default 1152
+        
+        with col2:
+            height = st.selectbox("Alto", [512, 768, 1024, 1152], index=3)  # Default 1152
+            output_quality = st.slider("Calidad", min_value=80, max_value=100, value=100)
+        
+        output_format = st.selectbox("Formato de salida", ["webp", "png"], index=0)
+        
+        # Prompt negativo para stickers
+        negative_prompt = st.text_area(
+            "Prompt negativo (opcional):",
+            value="",
+            height=60,
+            placeholder="Elementos que NO quieres en el sticker..."
+        )
+        
         params = {
-            "width": 1024,
-            "height": 1024,
-            "num_outputs": 1,
-            "guidance_scale": 7.5,
-            "num_inference_steps": 50,
-            "safety_tolerance": 2
+            "steps": steps,
+            "width": width,
+            "height": height,
+            "output_format": output_format,
+            "output_quality": output_quality,
+            "negative_prompt": negative_prompt,
+            "number_of_images": 1
         }
 
 # Navegación por páginas
