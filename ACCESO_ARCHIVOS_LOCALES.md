@@ -33,8 +33,7 @@ flux-pro-dental/
 │   ├── ⚡ ssd_20250118_*.jpg       # ← Imágenes SSD-1B
 │   ├── 🎬 seedance_20250118_*.mp4  # ← Videos Seedance
 │   ├── 🎭 pixverse_20250118_*.mp4  # ← Videos Pixverse
-│   ├── 🎥 veo_20250118_*.mp4       # ← Videos VEO 3 Fast
-│   └── 🏷️ sticker_20250118_*.png   # ← Stickers
+│   └── 🎥 veo_20250118_*.mp4       # ← Videos VEO 3 Fast
 ```
 
 ---

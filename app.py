@@ -72,29 +72,7 @@ def generate_video_pixverse(prompt, **params):
     )
     return output
 
-# Función para generar stickers
-def generate_sticker(prompt, **params):
-    # Usar el modelo específico de stickers con la versión correcta
-    # Parámetros por defecto para stickers
-    default_params = {
-        "steps": 17,
-        "width": 1152,
-        "height": 1152,
-        "prompt": prompt,
-        "output_format": "webp",
-        "output_quality": 100,
-        "negative_prompt": "",
-        "number_of_images": 1
-    }
-    
-    # Combinar con parámetros personalizados
-    sticker_params = {**default_params, **params, "prompt": prompt}  # Asegurar que prompt no se sobrescriba
-    
-    output = replicate.run(
-        "fofr/sticker-maker:4acb778eb059772225ec213948f0660867b2e03f277448f18cf1800b96a65a1a",
-        input=sticker_params
-    )
-    return output
+
 
 # Función para generar imágenes con Kandinsky 2.2
 def generate_kandinsky(prompt, **params):
@@ -253,7 +231,7 @@ with st.sidebar:
     # Selector de tipo de contenido
     content_type = st.selectbox(
         "🎯 Tipo de contenido:",
-        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)", "🏷️ Sticker Maker"],
+        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)"],
         help="Selecciona el tipo de contenido que quieres generar"
     )
     
@@ -443,38 +421,6 @@ with st.sidebar:
             "camera_motion": camera_motion,
             "motion_intensity": motion_intensity
         }
-        
-    else:  # Stickers Flux Pro
-        st.subheader("🏷️ Parámetros de Sticker")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            steps = st.slider("Pasos", min_value=10, max_value=30, value=17, help="Número de pasos de inferencia")
-            width = st.selectbox("Ancho", [512, 768, 1024, 1152], index=3)  # Default 1152
-        
-        with col2:
-            height = st.selectbox("Alto", [512, 768, 1024, 1152], index=3)  # Default 1152
-            output_quality = st.slider("Calidad", min_value=80, max_value=100, value=100)
-        
-        output_format = st.selectbox("Formato de salida", ["webp", "png"], index=0)
-        
-        # Prompt negativo para stickers
-        negative_prompt = st.text_area(
-            "Prompt negativo (opcional):",
-            value="",
-            height=60,
-            placeholder="Elementos que NO quieres en el sticker..."
-        )
-        
-        params = {
-            "steps": steps,
-            "width": width,
-            "height": height,
-            "output_format": output_format,
-            "output_quality": output_quality,
-            "negative_prompt": negative_prompt,
-            "number_of_images": 1
-        }
 
 # Navegación por páginas
 if st.session_state.current_page == 'generator':
@@ -576,20 +522,6 @@ if st.session_state.current_page == 'generator':
                 "🌃 Metrópolis Futurista": "Futuristic city with flying cars, holographic billboards, neon lights reflecting on glass buildings, cyberpunk atmosphere, sci-fi urban landscape",
                 "🔥 Volcán en Erupción": "Active volcano erupting, lava flows cascading down mountainside, dramatic geological event, cinematic documentation of earth's power",
                 "🌈 Aurora Boreal": "Northern lights dancing across arctic sky, ethereal green and purple colors, time-lapse photography, magical atmospheric phenomenon",
-                "✨ Personalizado": ""
-            }
-        else:  # Stickers Flux Pro
-            templates = {
-                "🌟 Sticker Brillante": "a shiny, colorful star sticker, cartoon style, bright and cheerful, with a glossy finish",
-                "❤️ Corazón Colorido": "a vibrant, multi-colored heart sticker, cartoon style, with a glossy shine",
-                "🐶 Perro Kawaii": "a cute, cartoon-style dog sticker, big eyes, smiling, with a colorful collar",
-                "🍕 Pizza Divertida": "a fun, cartoon-style pizza slice sticker, with exaggerated toppings and a smiling face",
-                "🌈 Arcoíris Feliz": "a cheerful rainbow sticker with clouds, cartoon style, bright colors, glossy finish, kawaii aesthetic",
-                "🎃 Halloween Spooky": "a cute Halloween pumpkin sticker, cartoon style, friendly face, orange and black colors, glossy finish",
-                "🦄 Unicornio Mágico": "a magical unicorn sticker, cartoon style, pastel colors, rainbow mane, sparkles, glossy finish",
-                "🌮 Taco Divertido": "a funny taco character sticker, cartoon style, smiling face, vibrant colors, Mexican food theme",
-                "🐱 Gato Adorable": "an adorable cat sticker, cartoon style, big eyes, cute pose, colorful fur, glossy finish",
-                "🎮 Gaming Retro": "a retro gaming console sticker, pixel art style, nostalgic colors, classic gaming aesthetic, glossy finish",
                 "✨ Personalizado": ""
             }
         
@@ -1128,88 +1060,6 @@ if st.session_state.current_page == 'generator':
                                     st.error(f"🔍 Detalles: {type(e).__name__}")
                                     st.code(traceback.format_exc())
                         
-                        elif "Stickers" in content_type:
-                            st.info(f"🏷️ Generando sticker... Iniciado a las {start_datetime}")
-                            
-                            with st.spinner("🏷️ Generando sticker..."):
-                                try:
-                                    # Marcar tiempo específico para generación de sticker
-                                    sticker_start_time = time.time()
-                                    # generate_sticker ahora usa replicate.run() y devuelve output directo
-                                    output = generate_sticker(prompt, **params)
-                                    
-                                    if output:
-                                        st.success("🏷️ ¡Sticker generado exitosamente!")
-                                        
-                                        # Manejar diferentes tipos de output
-                                        try:
-                                            if isinstance(output, list):
-                                                # Si es una lista, tomar el primer elemento
-                                                first_output = output[0]
-                                                if hasattr(first_output, 'url'):
-                                                    # Es un objeto FileOutput
-                                                    sticker_url = first_output.url
-                                                else:
-                                                    # Es una URL directa
-                                                    sticker_url = str(first_output)
-                                            elif hasattr(output, 'url'):
-                                                # Es un objeto FileOutput directo
-                                                sticker_url = output.url
-                                            else:
-                                                # Es una URL directa
-                                                sticker_url = str(output)
-                                            
-                                            st.write(f"🔗 **URL del sticker:** {sticker_url}")
-                                            
-                                            # Descargar sticker
-                                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                            filename = f"sticker_{timestamp}.png"
-                                            local_path = download_and_save_file(sticker_url, filename, "sticker")
-                                            
-                                        except Exception as url_error:
-                                            st.error(f"❌ Error al procesar URL del sticker: {str(url_error)}")
-                                            st.code(f"Output recibido: {type(output)} - {str(output)[:200]}")
-                                            sticker_url = None
-                                            local_path = None
-                                        
-                                        # Calcular tiempo de procesamiento específico del sticker
-                                        processing_time = time.time() - sticker_start_time
-                                        
-                                        # Guardar en historial solo si tenemos URL válida
-                                        if sticker_url:
-                                            history_item = {
-                                                "tipo": "sticker",
-                                                "fecha": datetime.now().isoformat(),
-                                                "prompt": prompt,
-                                                "plantilla": selected_template,
-                                                "url": sticker_url,
-                                                "archivo_local": filename if local_path else None,
-                                                "parametros": params,
-                                                "id_prediccion": "N/A (output directo)",
-                                                "processing_time": processing_time,  # Tiempo real de procesamiento
-                                                "modelo": "Sticker Maker"  # Modelo específico para identificación
-                                            }
-                                            save_to_history(history_item)
-                                            
-                                            if local_path:
-                                                st.success(f"💾 Sticker guardado: `{filename}`")
-                                            
-                                            # Mostrar sticker
-                                            try:
-                                                st.image(sticker_url, caption="Sticker generado", use_container_width=True)
-                                            except Exception as img_error:
-                                                st.warning(f"⚠️ No se pudo mostrar el sticker: {str(img_error)}")
-                                                st.markdown(f'<a href="{sticker_url}" target="_blank">🔗 Ver sticker en nueva pestaña</a>', unsafe_allow_html=True)
-                                        else:
-                                            st.error("❌ No se pudo obtener URL del sticker")
-                                    else:
-                                        st.error("❌ Sticker Maker no devolvió output")
-                                
-                                except Exception as e:
-                                    st.error(f"❌ Error con Stickers: {str(e)}")
-                                    st.error(f"🔍 Tipo de error: {type(e).__name__}")
-                                    st.code(traceback.format_exc())
-                        
                         # Estadísticas finales
                         end_time = time.time()
                         total_time = end_time - start_time
@@ -1275,10 +1125,6 @@ if st.session_state.current_page == 'generator':
                         model_icon = "🎬"
                         model_name = "Seedance"
                         bg_color = "#FF6B6B"
-                    elif "sticker" in model.lower():
-                        model_icon = "🏷️"
-                        model_name = "Stickers"
-                        bg_color = "#84fab0"
                     else:
                         model_icon = "📊"
                         model_name = model.title()
@@ -1318,7 +1164,6 @@ if st.session_state.current_page == 'generator':
             st.markdown("[💃 Documentación Seedance](https://replicate.com/fofr/realvisxl-v4.0)")
             st.markdown("[🎬 Documentación Pixverse](https://replicate.com/pixverse/pixverse-v1.8)")
             st.markdown("[🚀 Documentación VEO 3 Fast](https://replicate.com/fofr/veo-3-fast)")
-            st.markdown("[🏷️ Documentación Stickers](https://replicate.com/fofr/sticker-maker)")
 
     # Sección de historial avanzado
     with tab2:
@@ -1342,25 +1187,9 @@ if st.session_state.current_page == 'generator':
             total_videos_veo = len([h for h in history if 
                 h.get('tipo') == 'video' and ('veo3' in h.get('archivo_local', '').lower() or 'veo' in h.get('modelo', '').lower())
             ])
-            total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
             
-            # Tarifas reales por unidad extraídas de la factura de Replicate
-            cost_rates = {
-                'imagen': {
-                    'flux_pro': {'rate': 0.055, 'unit': 'imagen'},      # $0.055 por imagen
-                    'kandinsky': {'rate': 0.0014, 'unit': 'segundo'},   # $0.0014 por segundo  
-                    'ssd_1b': {'rate': 0.000975, 'unit': 'segundo'}     # $0.000975 por segundo
-                },
-                'video': {
-                    'seedance': {'rate': 0.15, 'unit': 'segundo'},      # $0.15 por segundo
-                    'pixverse': {'rate': 0.010, 'unit': 'unit'},        # $0.010 por unit (calculado por duración/resolución)
-                    'veo3': {'rate': 0.40, 'unit': 'segundo'}           # $0.40 por segundo
-                },
-                'sticker': {'rate': 0.055, 'unit': 'sticker'}           # $0.055 por sticker
-            }
-            
-            # Usar la función calculate_item_cost de utils.py
-            # (eliminada función duplicada)
+            # Usar la función calculate_item_cost de utils.py para calcular costos
+            # Los valores de tarifas están centralizados en utils.COST_RATES
             
             # Calcular costo total
             total_cost_usd = 0
@@ -1382,7 +1211,7 @@ if st.session_state.current_page == 'generator':
             st.markdown("### 📊 Resumen de Actividad")
             
             # Primera fila de métricas principales
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             
             with col1:
                 st.markdown(f"""
@@ -1417,26 +1246,10 @@ if st.session_state.current_page == 'generator':
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col3:
-                st.markdown(f"""
-                <div style="
-                    background: linear-gradient(135deg, #A8E6CF, #7FB069);
-                    padding: 25px;
-                    border-radius: 15px;
-                    text-align: center;
-                    color: white;
-                    box-shadow: 0 4px 15px rgba(168,230,207,0.3);
-                ">
-                    <div style="font-size: 14px; margin-bottom: 5px;">🏷️ STICKERS</div>
-                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_stickers}</div>
-                    <div style="font-size: 12px; opacity: 0.9;">Generados</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
             st.markdown("<br>", unsafe_allow_html=True)
             
             # Segunda fila con costos y total
-            col4, col5, col6 = st.columns(3)
+            col4, col5 = st.columns(2)
             
             with col4:
                 st.markdown(f"""
@@ -1470,22 +1283,6 @@ if st.session_state.current_page == 'generator':
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col6:
-                st.markdown(f"""
-                <div style="
-                    background: linear-gradient(135deg, #ffecd2, #fcb69f);
-                    padding: 25px;
-                    border-radius: 15px;
-                    text-align: center;
-                    color: #8B4513;
-                    box-shadow: 0 4px 15px rgba(255,236,210,0.3);
-                ">
-                    <div style="font-size: 16px; margin-bottom: 5px; font-weight: bold;">💶 COSTO EUR</div>
-                    <div style="font-size: 42px; font-weight: bold; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">€{total_cost_eur:.2f}</div>
-                    <div style="font-size: 14px; opacity: 0.9;">Costo Total Estimado</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
             st.markdown("<br><br>", unsafe_allow_html=True)
             
             # Filtros avanzados
@@ -1495,7 +1292,7 @@ if st.session_state.current_page == 'generator':
             with col1:
                 filter_type = st.selectbox(
                     "Filtrar por tipo:",
-                    ["Todos", "imagen", "video", "sticker", "media"]
+                    ["Todos", "imagen", "video", "media"]
                 )
             
             with col2:
@@ -1565,8 +1362,6 @@ if st.session_state.current_page == 'generator':
                         icon = "🎥"  # VEO 3 Fast - cámara profesional
                     else:
                         icon = "📹"  # Video genérico - videocámara
-                elif tipo.lower() == 'sticker':
-                    icon = "🏷️"
                 elif tipo.lower() == 'media':
                     icon = "📄"
                 else:
@@ -1681,7 +1476,7 @@ if st.session_state.current_page == 'generator':
                         preview_shown = False
                         if archivo_local and local_path and local_path.exists():
                             try:
-                                if tipo.lower() in ['imagen', 'sticker']:
+                                if tipo.lower() == 'imagen':
                                     st.image(str(local_path), caption="Preview (Local)", use_container_width=True)
                                 elif tipo.lower() == 'video':
                                     st.video(str(local_path))
@@ -1693,7 +1488,7 @@ if st.session_state.current_page == 'generator':
                         # Si no se pudo mostrar desde archivo local, intentar URL
                         if not preview_shown and url:
                             try:
-                                if tipo.lower() in ['imagen', 'sticker']:
+                                if tipo.lower() == 'imagen':
                                     st.image(url, caption="Preview", use_container_width=True)
                                 elif tipo.lower() == 'video':
                                     # Mejor visualización para videos en el historial
@@ -1770,11 +1565,10 @@ elif st.session_state.current_page == 'biblioteca':
     if history:
         # CONTENIDO PRINCIPAL
         # Estadísticas rápidas en la parte superior
-        stats_col1, stats_col2, stats_col3, stats_col4 = st.columns(4)
+        stats_col1, stats_col2, stats_col3 = st.columns(3)
         total_items = len(history)
         total_imagenes = len([h for h in history if h.get('tipo') == 'imagen'])
         total_videos = len([h for h in history if h.get('tipo') == 'video'])
-        total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
         total_cost_usd = sum(calculate_item_cost(h)[0] for h in history)
         
         with stats_col1:
@@ -1782,8 +1576,6 @@ elif st.session_state.current_page == 'biblioteca':
         with stats_col2:
             st.metric("🖼️ Imágenes", total_imagenes)
         with stats_col3:
-            st.metric("🎬 Videos", total_videos)
-        with stats_col4:
             st.markdown(f"""
             <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 10px; color: white;">
                 <div style="font-size: 14px; opacity: 0.9;">💰 COSTO TOTAL</div>
@@ -1798,7 +1590,7 @@ elif st.session_state.current_page == 'biblioteca':
         filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
         
         with filter_col1:
-            filter_type = st.selectbox("Filtrar por tipo:", ["Todos", "imagen", "video", "sticker"])
+            filter_type = st.selectbox("Filtrar por tipo:", ["Todos", "imagen", "video"])
         
         with filter_col2:
             sort_order = st.selectbox("Ordenar por:", ["Más reciente", "Más antiguo", "Tipo"])

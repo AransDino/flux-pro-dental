@@ -15,6 +15,36 @@ import streamlit as st
 
 
 # ===============================
+# FUNCIONES AUXILIARES
+# ===============================
+
+def get_model_from_filename(filename: str) -> str:
+    """
+    Extraer nombre del modelo desde el nombre del archivo
+
+    Args:
+        filename: Nombre del archivo
+
+    Returns:
+        str: Nombre del modelo
+    """
+    if 'flux' in filename.lower():
+        return 'Flux Pro'
+    elif 'kandinsky' in filename.lower():
+        return 'Kandinsky'
+    elif 'ssd' in filename.lower():
+        return 'SSD-1B'
+    elif 'seedance' in filename.lower():
+        return 'Seedance'
+    elif 'pixverse' in filename.lower():
+        return 'Pixverse'
+    elif 'veo3' in filename.lower():
+        return 'VEO 3 Fast'
+    else:
+        return 'Desconocido'
+
+
+# ===============================
 # CONFIGURACIÓN Y CONSTANTES
 # ===============================
 
@@ -36,9 +66,6 @@ COST_RATES = {
         'seedance': {'rate': 0.125, 'unit': 'per_second'},
         'pixverse': {'rate': 0.000625, 'unit': 'per_unit'},  # $0.000625 por unit
         'veo3': {'rate': 0.25, 'unit': 'per_second'}
-    },
-    'sticker': {
-        'default': {'rate': 0.055, 'unit': 'per_image'}
     }
 }
 
@@ -206,7 +233,7 @@ def filter_history_by_type(history: List[Dict[str, Any]], tipo: str) -> List[Dic
     
     Args:
         history: Lista del historial
-        tipo: Tipo a filtrar ('imagen', 'video', 'sticker')
+        tipo: Tipo a filtrar ('imagen', 'video')
         
     Returns:
         List[Dict]: Elementos filtrados
@@ -315,8 +342,6 @@ def calculate_item_cost(item: Dict[str, Any]) -> Tuple[float, str, str]:
         cost, model_info, calculation_details = _calculate_video_cost(
             archivo_local, modelo, parametros, item
         )
-    elif item_type == 'sticker':
-        cost, model_info, calculation_details = _calculate_sticker_cost()
     
     return round(cost, 3), model_info, calculation_details
 
@@ -433,16 +458,6 @@ def _calculate_video_cost(archivo_local: str, modelo: str, parametros: Dict, ite
     return cost, model_info, calculation_details
 
 
-def _calculate_sticker_cost() -> Tuple[float, str, str]:
-    """Calcular costo para stickers"""
-    model_key = 'default'
-    cost = COST_RATES['sticker'][model_key]['rate']
-    model_info = "Sticker Generator"
-    calculation_details = f"${COST_RATES['sticker'][model_key]['rate']} por sticker"
-    
-    return cost, model_info, calculation_details
-
-
 def calculate_total_cost(history: List[Dict[str, Any]]) -> float:
     """
     Calcular el costo total de todo el historial
@@ -529,15 +544,14 @@ def validate_cost_range(cost: float, item_type: str) -> bool:
     
     Args:
         cost: Costo a validar
-        item_type: Tipo de ítem ('imagen', 'video', 'sticker')
+        item_type: Tipo de ítem ('imagen', 'video')
         
     Returns:
         bool: True si el costo está en un rango razonable
     """
     ranges = {
         'imagen': (0.001, 1.0),
-        'video': (0.1, 10.0),
-        'sticker': (0.01, 0.5)
+        'video': (0.1, 10.0)
     }
     
     if item_type not in ranges:

@@ -1,8 +1,8 @@
 {
   "🖼️ Imagen (Flux Pro)": {
-    "total": 8,
+    "total": 12,
     "exitosas": 2,
-    "tiempo_promedio": 9.736797843128443
+    "tiempo_promedio": 10.280409904429689
   },
   "🚀 Video (VEO 3 Fast)": {
     "total": 3,
@@ -10,14 +10,14 @@
     "tiempo_promedio": 63.084427654743195
   },
   "⚡ Imagen (SSD-1B)": {
-    "total": 6,
+    "total": 7,
     "exitosas": 0,
-    "tiempo_promedio": 7.098145976662636
+    "tiempo_promedio": 18.993102200329304
   },
   "🎭 Video Anime (Pixverse)": {
-    "total": 5,
+    "total": 6,
     "exitosas": 0,
-    "tiempo_promedio": 40.717461824417114
+    "tiempo_promedio": 42.852261662483215
   },
   "🎬 Video (Seedance)": {
     "total": 1,

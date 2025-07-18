@@ -91,7 +91,6 @@ history_item = {
   - **Seedance (videos) - CORREGIDO**
   - Pixverse (anime)
   - VEO 3 Fast (Google)
-  - Stickers
 
 ### **Sistema de Pruebas Robusto**
 - ✅ **40 pruebas automatizadas**

@@ -12,9 +12,6 @@
 - **Pixverse**: $0.010 por video (tarifa fija por unidad)
 - **VEO 3 Fast**: $0.40 por segundo (aplicamos ~5s por video)
 
-### 🏷️ **Stickers:**
-- **Stickers**: $0.055 por sticker (tarifa fija)
-
 ## 🎯 **Estimaciones para Nuestro Historial:**
 
 Cada elemento generado en nuestra aplicación usa estas tarifas:
@@ -25,6 +22,5 @@ Cada elemento generado en nuestra aplicación usa estas tarifas:
 - **Video Seedance**: $0.15 × 5s = $0.75
 - **Video Pixverse**: $0.010
 - **Video VEO 3**: $0.40 × 5s = $2.00
-- **Sticker**: $0.055
 
 ¡Ahora los costos son estimaciones realistas basadas en las tarifas reales! 💰

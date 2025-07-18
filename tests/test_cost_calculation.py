@@ -1,213 +1,165 @@
 """
-Pruebas para el sistema de cálculo de costos
+Pruebas para cálculos de costos de modelos de IA
 """
 import pytest
-from unittest.mock import Mock, patch
-
-# Importar funciones reales de utils
-from utils import (
-    calculate_item_cost, calculate_total_cost, calculate_cost_breakdown,
-    convert_usd_to_eur, validate_cost, validate_cost_range, round_cost,
-    COST_RATES
-)
-
+from utils import calculate_item_cost, COST_RATES, get_model_from_filename
 
 class TestCostCalculation:
-    """Pruebas para el cálculo de costos de generación"""
+    """Pruebas para el cálculo de costos de los diferentes modelos"""
     
-    def test_calculate_flux_pro_cost(self):
+    def test_calculate_flux_cost(self):
         """Probar cálculo de costo para Flux Pro"""
-        # Usar la función real de utils
+        # Flux Pro: $0.055 por imagen
         item = {
             'tipo': 'imagen',
-            'archivo_local': 'flux_pro_image.webp',  # Indica que es Flux Pro
             'modelo': 'flux_pro',
-            'parametros': {'width': 1024, 'height': 1024}
+            'archivo_local': 'flux_image.png',
+            'parametros': {'steps': 20}
         }
-        
-        cost, model_info, calculation = calculate_item_cost(item)
-        
-        expected_cost = COST_RATES['imagen']['flux_pro']['rate']
-        assert cost == expected_cost
-        assert "Flux Pro" in model_info
-        assert str(expected_cost) in calculation
+        cost, model_info, details = calculate_item_cost(item)
+        assert cost == 0.055
+        assert 'Flux Pro' in model_info
     
     def test_calculate_kandinsky_cost(self):
-        """Probar cálculo de costo para Kandinsky"""
-        def calculate_item_cost_mock(item):
-            if item.get('tipo') == 'imagen' and 'kandinsky' in item.get('modelo', '').lower():
-                seconds = item.get('processing_time', 10)
-                cost = 0.0014 * seconds
-                return cost, f"Kandinsky ({seconds}s)", f"$0.0014 × {seconds}s"
-            return 0, "Unknown", "N/A"
-        
+        """Probar cálculo de costo para Kandinsky 2.2"""
+        # Kandinsky: $0.00925 por segundo
         item = {
             'tipo': 'imagen',
             'modelo': 'kandinsky',
+            'archivo_local': 'kandinsky_image.png',
+            'parametros': {'num_inference_steps': 30},
             'processing_time': 12
         }
-        
-        cost, model_info, calculation = calculate_item_cost_mock(item)
-        
-        assert cost == 0.0168  # 0.0014 * 12
-        assert "Kandinsky (12s)" == model_info
-        assert "0.0014 × 12s" in calculation
+        cost, model_info, details = calculate_item_cost(item)
+        expected_cost = 0.00925 * 12  # $0.111
+        assert cost == round(expected_cost, 3)
+        assert 'Kandinsky' in model_info
     
-    def test_calculate_video_seedance_cost(self):
-        """Probar cálculo de costo para videos Seedance"""
-        def calculate_item_cost_mock(item):
-            if item.get('tipo') == 'video' and 'seedance' in item.get('modelo', '').lower():
-                seconds = item.get('video_duration', 5)
-                cost = 0.15 * seconds
-                return cost, f"Seedance ({seconds}s)", f"$0.15 × {seconds}s"
-            return 0, "Unknown", "N/A"
-        
+    def test_calculate_ssd_cost(self):
+        """Probar cálculo de costo para SSD-1B"""
+        # SSD-1B: $0.00925 por segundo, pero estima tiempo basado en steps
+        item = {
+            'tipo': 'imagen',
+            'modelo': 'ssd_1b',
+            'archivo_local': 'ssd_image.png',
+            'parametros': {'num_inference_steps': 10},
+            'processing_time': 6
+        }
+        cost, model_info, details = calculate_item_cost(item)
+        # Con steps=10, estima ~4 segundos (max(4, min(10, 10*0.2)) = 4)
+        expected_cost = 0.00925 * 4  # $0.037
+        assert cost == round(expected_cost, 3)
+        assert 'SSD-1B' in model_info
+    
+    def test_calculate_seedance_cost(self):
+        """Probar cálculo de costo para Seedance"""
+        # Seedance: $0.125 por segundo
         item = {
             'tipo': 'video',
             'modelo': 'seedance',
-            'video_duration': 5
+            'archivo_local': 'seedance_video.mp4',
+            'parametros': {'duration': 4},
+            'video_duration': 4
         }
-        
-        cost, model_info, calculation = calculate_item_cost_mock(item)
-        
-        assert cost == 0.75  # 0.15 * 5
-        assert "Seedance (5s)" == model_info
-        assert "0.15 × 5s" in calculation
+        cost, model_info, details = calculate_item_cost(item)
+        expected_cost = 0.125 * 4  # $0.5
+        assert cost == round(expected_cost, 3)
+        assert 'Seedance' in model_info
     
-    def test_calculate_sticker_cost(self):
-        """Probar cálculo de costo para stickers"""
-        def calculate_item_cost_mock(item):
-            if item.get('tipo') == 'sticker':
-                return 0.055, "Sticker Flux Pro", "$0.055 por sticker"
-            return 0, "Unknown", "N/A"
-        
+    def test_calculate_pixverse_cost(self):
+        """Probar cálculo de costo para Pixverse"""
+        # Pixverse: $0.000625 por unit, estima units basado en duración/resolución
         item = {
-            'tipo': 'sticker',
-            'modelo': 'sticker-maker'
+            'tipo': 'video',
+            'modelo': 'pixverse',
+            'archivo_local': 'pixverse_video.mp4',
+            'parametros': {'duration': '3s', 'resolution': '720p'}
         }
-        
-        cost, model_info, calculation = calculate_item_cost_mock(item)
-        
+        cost, model_info, details = calculate_item_cost(item)
+        # Con 3s y 720p: 3*6 = 18 units base, 18*0.000625 = 0.01125, redondeado a 0.011
+        expected_cost = 0.011  # Valor real observado  
+        assert cost == expected_cost
+        assert 'Pixverse' in model_info
+    
+    def test_calculate_veo3_cost(self):
+        """Probar cálculo de costo para VEO 3 Fast"""
+        # VEO 3: $0.25 por segundo
+        item = {
+            'tipo': 'video',
+            'modelo': 'veo3',
+            'archivo_local': 'veo3_video.mp4',
+            'parametros': {'duration': 3},
+            'video_duration': 3
+        }
+        cost, model_info, details = calculate_item_cost(item)
+        expected_cost = 0.25 * 3  # $0.75
+        assert cost == round(expected_cost, 3)
+        assert 'VEO 3' in model_info
+    
+    def test_calculate_unknown_model_cost(self):
+        """Probar que modelos desconocidos usan Flux Pro por defecto"""
+        item = {
+            'tipo': 'imagen',
+            'modelo': 'unknown_model',
+            'archivo_local': 'unknown.png',
+            'parametros': {}
+        }
+        cost, model_info, details = calculate_item_cost(item)
+        # Por defecto usa Flux Pro
         assert cost == 0.055
-        assert model_info == "Sticker Flux Pro"
-        assert "$0.055" in calculation
+        assert 'Flux Pro' in model_info
     
-    def test_calculate_total_cost_multiple_items(self, sample_history_data):
-        """Probar cálculo de costo total para múltiples elementos"""
-        def calculate_item_cost_mock(item):
-            costs = {
-                'imagen': 0.055,
-                'video': 0.75,
-                'sticker': 0.055
-            }
-            return costs.get(item.get('tipo'), 0), "Model", "Calculation"
-        
-        def calculate_total_cost(history):
-            return sum(calculate_item_cost_mock(item)[0] for item in history)
-        
-        total = calculate_total_cost(sample_history_data)
-        expected = 0.055 + 0.75 + 0.055  # imagen + video + sticker
-        
-        assert total == expected
-        assert round(total, 2) == 0.86  # Evitar problemas de precisión flotante
+    def test_empty_item_cost(self):
+        """Probar que item vacío usa valores por defecto (Flux Pro)"""
+        item = {}
+        cost, model_info, details = calculate_item_cost(item)
+        # Por defecto: tipo='imagen', modelo='flux_pro'
+        assert cost == 0.055
+        assert 'Flux Pro' in model_info
     
-    def test_cost_conversion_usd_to_eur(self):
-        """Probar conversión de USD a EUR"""
-        def convert_usd_to_eur(usd_amount, rate=0.92):
-            return usd_amount * rate
+    def test_cost_rates_structure(self):
+        """Verificar que la estructura de COST_RATES es correcta"""
+        assert 'imagen' in COST_RATES
+        assert 'video' in COST_RATES
         
-        usd_cost = 1.00
-        eur_cost = convert_usd_to_eur(usd_cost)
+        # Verificar modelos de imagen
+        imagen_models = COST_RATES['imagen']
+        assert 'flux_pro' in imagen_models
+        assert 'kandinsky' in imagen_models
+        assert 'ssd_1b' in imagen_models
         
-        assert eur_cost == 0.92
+        # Verificar modelos de video
+        video_models = COST_RATES['video']
+        assert 'seedance' in video_models
+        assert 'pixverse' in video_models
+        assert 'veo3' in video_models
         
-        # Probar con diferentes cantidades
-        assert convert_usd_to_eur(0.055) == pytest.approx(0.0506, rel=1e-3)
-        assert convert_usd_to_eur(0.75) == pytest.approx(0.69, rel=1e-2)
+        # Verificar que cada modelo tiene rate y unit
+        for category in COST_RATES.values():
+            for model_data in category.values():
+                assert 'rate' in model_data
+                assert 'unit' in model_data
+                assert isinstance(model_data['rate'], (int, float))
+                assert isinstance(model_data['unit'], str)
+        
+        # Verificar valores específicos
+        assert COST_RATES['imagen']['flux_pro']['rate'] == 0.055
+        assert COST_RATES['imagen']['kandinsky']['rate'] == 0.00925
+        assert COST_RATES['imagen']['ssd_1b']['rate'] == 0.00925
+        assert COST_RATES['video']['seedance']['rate'] == 0.125
+        assert COST_RATES['video']['pixverse']['rate'] == 0.000625
+        assert COST_RATES['video']['veo3']['rate'] == 0.25
     
-    def test_cost_breakdown_by_model(self, sample_history_data):
-        """Probar desglose de costos por modelo"""
-        def calculate_cost_breakdown(history):
-            breakdown = {}
-            
-            for item in history:
-                model = item.get('modelo', 'unknown')
-                tipo = item.get('tipo', 'unknown')
-                
-                # Calcular costo simulado
-                if tipo == 'imagen':
-                    cost = 0.055
-                elif tipo == 'video':
-                    cost = 0.75
-                elif tipo == 'sticker':
-                    cost = 0.055
-                else:
-                    cost = 0
-                
-                if model not in breakdown:
-                    breakdown[model] = {'count': 0, 'total_cost': 0}
-                
-                breakdown[model]['count'] += 1
-                breakdown[model]['total_cost'] += cost
-            
-            return breakdown
+    def test_get_model_from_filename(self):
+        """Probar extracción de modelo desde nombre de archivo"""
+        assert get_model_from_filename('flux_image_123.png') == 'Flux Pro'
+        assert get_model_from_filename('kandinsky_art.jpg') == 'Kandinsky'
+        assert get_model_from_filename('ssd_fast_gen.png') == 'SSD-1B'
+        assert get_model_from_filename('seedance_video.mp4') == 'Seedance'
+        assert get_model_from_filename('pixverse_anime.mp4') == 'Pixverse'
+        assert get_model_from_filename('veo3_cinema.mp4') == 'VEO 3 Fast'
+        assert get_model_from_filename('unknown_model.png') == 'Desconocido'
         
-        breakdown = calculate_cost_breakdown(sample_history_data)
-        
-        assert 'flux-pro' in breakdown
-        assert 'seedance' in breakdown
-        assert 'sticker-maker' in breakdown
-        
-        assert breakdown['flux-pro']['count'] == 1
-        assert breakdown['flux-pro']['total_cost'] == 0.055
-        
-        assert breakdown['seedance']['count'] == 1
-        assert breakdown['seedance']['total_cost'] == 0.75
-
-
-class TestCostValidation:
-    """Pruebas para validación de cálculos de costo"""
-    
-    def test_validate_positive_costs(self):
-        """Probar que los costos sean siempre positivos"""
-        def validate_cost(cost):
-            return cost >= 0
-        
-        assert validate_cost(0.055) is True
-        assert validate_cost(0) is True
-        assert validate_cost(-0.1) is False
-    
-    def test_validate_reasonable_cost_ranges(self):
-        """Probar que los costos estén en rangos razonables"""
-        def validate_cost_range(cost, item_type):
-            ranges = {
-                'imagen': (0, 1.0),      # Máximo $1 por imagen
-                'video': (0, 10.0),      # Máximo $10 por video
-                'sticker': (0, 0.5)      # Máximo $0.5 por sticker
-            }
-            
-            min_cost, max_cost = ranges.get(item_type, (0, float('inf')))
-            return min_cost <= cost <= max_cost
-        
-        # Costos válidos
-        assert validate_cost_range(0.055, 'imagen') is True
-        assert validate_cost_range(0.75, 'video') is True
-        assert validate_cost_range(0.055, 'sticker') is True
-        
-        # Costos inválidos
-        assert validate_cost_range(2.0, 'imagen') is False
-        assert validate_cost_range(15.0, 'video') is False
-        assert validate_cost_range(1.0, 'sticker') is False
-    
-    def test_cost_precision(self):
-        """Probar precisión de cálculos de costo"""
-        def round_cost(cost, decimals=3):
-            return round(cost, decimals)
-        
-        # Probar redondeo a 3 decimales
-        assert round_cost(0.0556789) == 0.056
-        assert round_cost(0.0554321) == 0.055
-        
-        # Verificar que no se pierda precisión innecesariamente
-        assert round_cost(0.055) == 0.055
-        assert round_cost(0.75) == 0.75
+        # Verificar case-insensitive
+        assert get_model_from_filename('FLUX_IMAGE.PNG') == 'Flux Pro'
+        assert get_model_from_filename('VEO3_VIDEO.MP4') == 'VEO 3 Fast'

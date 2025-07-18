@@ -1,6 +1,36 @@
-# 🦷 AI Models Pro Generator
+# 🦷 AI Models Pro Generato- ### 🎯### 🎯 **- **⚡- **⚡- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
 
-**Generador avanzado de imágenes y videos con IA - by Ayoze Benítez**
+### 🎛️ **Interfaz Avanzada****: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+
+### 🎛️ **Interfaz Avanzada****: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+
+### 🎛️ **Interfaz Avanzada** de IA Integrados**
+- **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
+- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
+- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaos de IA Integrados**
+- **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
+- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
+- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaux Pro**: Generación de imágenes dentales hiperrealistas
+- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
+- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
+- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaGenerador avanzado de imágenes y videos con IA - by Ayoze Benítez**
 
 Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual de alta calidad. Sistema robusto con historial dual (online/local) y gestión avanzada de archivos.
 
@@ -31,7 +61,6 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
 - **�🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
 - **🎭 Pixverse v3.5**: Videos anime y contenido creativo
 - **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
-- **🏷️ Stickers**: Pegatinas y diseños vectoriales
 
 ### 🎛️ **Interfaz Avanzada**
 - **Sidebar dinámico** con parámetros específicos por modelo
@@ -273,7 +302,6 @@ La aplicación implementa un sistema robusto de doble acceso a los archivos gene
 - **Seedance**: ~$0.10 por segundo (ajustado por calidad)
 - **Pixverse**: ~$0.08 por segundo (ajustado por calidad)
 - **VEO 3 Fast**: ~$0.12 por segundo (calidad cinematográfica de Google)
-- **Stickers**: ~$0.02 por sticker
 
 ## 📁 Estructura del Proyecto
 
@@ -439,7 +467,6 @@ Este proyecto está en desarrollo activo. Las mejoras y sugerencias son bienveni
 
 - ✅ **Sistema de iconos mejorado** - Iconos cinema para videos, art para imágenes
 - ✅ **Cálculos de costos unificados** - Consistencia entre historial y biblioteca  
-- ✅ **Stickers completamente integrados** - Soporte completo con icono 🏷️
 - ✅ **Detección de modelos robusta** - Múltiples métodos de identificación
 - ✅ **Documentación estructurada** - Archivos .md organizados por tema
 
@@ -462,7 +489,7 @@ Proyecto desarrollado por **Ayoze Benítez** para uso educativo y profesional en
 
 ### 🔧 **Estado del Proyecto: Completamente Funcional**
 
-- ✅ **7 modelos de IA integrados** (Flux Pro, Kandinsky, SSD-1B, Seedance, Pixverse, VEO 3 Fast, Stickers)
+- ✅ **6 modelos de IA integrados** (Flux Pro, Kandinsky, SSD-1B, Seedance, Pixverse, VEO 3 Fast)
 - ✅ **Sistema de costos real** basado en tarifas de Replicate
 - ✅ **Iconos cinema-themed** para videos y art-themed para imágenes  
 - ✅ **Documentación completa** en 5 archivos .md estructurados
