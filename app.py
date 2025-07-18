@@ -1942,38 +1942,53 @@ elif st.session_state.current_page == 'biblioteca':
             st.rerun()
 
 
-# Función para mostrar el modal de configuración
+# Modal de configuración usando st.dialog (moderno)
+@st.dialog("⚙️ Configuración de la Aplicación")
 def show_config_modal():
-    """Modal de configuración con opciones de control de la aplicación"""
-    if 'show_config_modal' not in st.session_state:
-        st.session_state.show_config_modal = False
+    """Modal moderno de configuración con opciones de control de la aplicación"""
     
-    if st.session_state.show_config_modal:
-        with st.container():
-            st.markdown("### ⚙️ Configuración de la Aplicación")
-            
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                if st.button("🔄 Reiniciar Aplicación", use_container_width=True, type="secondary"):
-                    st.rerun()
-            
-            with col2:
-                if st.button("❌ Detener Aplicación", use_container_width=True, type="secondary"):
-                    st.stop()
-            
-            with col3:
-                if st.button("🚨 Cerrar Servidor", use_container_width=True, type="primary"):
-                    import os
-                    import sys
-                    os._exit(0)
-            
-            st.markdown("---")
-            
-            if st.button("✅ Cerrar Configuración", use_container_width=True):
-                st.session_state.show_config_modal = False
-                st.rerun()
+    st.markdown("### Opciones de Control")
+    st.markdown("Gestiona el estado y comportamiento de la aplicación:")
+    
+    # Botones de acción en columnas
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("🔄 Reiniciar", 
+                     use_container_width=True, 
+                     type="secondary",
+                     help="Recarga la aplicación manteniendo la sesión"):
+            st.rerun()
+    
+    with col2:
+        if st.button("❌ Detener", 
+                     use_container_width=True, 
+                     type="secondary",
+                     help="Detiene la ejecución de Streamlit"):
+            st.stop()
+    
+    with col3:
+        if st.button("🚨 Cerrar Servidor", 
+                     use_container_width=True, 
+                     type="primary",
+                     help="Cierra completamente el servidor"):
+            import os
+            import sys
+            os._exit(0)
+    
+    st.markdown("---")
+    
+    # Información adicional
+    st.markdown("**💡 Información:**")
+    st.markdown("- **Reiniciar**: Recarga la página actual sin cerrar el servidor")
+    st.markdown("- **Detener**: Para la ejecución pero mantiene el servidor activo")
+    st.markdown("- **Cerrar Servidor**: Termina completamente la aplicación")
+    
+    # El diálogo se cierra automáticamente al hacer clic fuera o con ESC
 
 
-# Llamar a la función del modal al final
-show_config_modal()
+# Verificar si se debe mostrar el modal
+if st.session_state.get('show_config_modal', False):
+    show_config_modal()
+    # Resetear el estado después de mostrar el modal
+    st.session_state.show_config_modal = False
