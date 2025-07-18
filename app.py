@@ -254,6 +254,137 @@ def update_generation_stats(model, time_taken, success):
     with open(stats_file, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
 
+# Tarifas reales por unidad extraídas de la factura de Replicate
+COST_RATES = {
+    'imagen': {
+        'flux_pro': {'rate': 0.055, 'unit': 'imagen'},      # $0.055 por imagen
+        'kandinsky': {'rate': 0.0014, 'unit': 'segundo'},   # $0.0014 por segundo  
+        'ssd_1b': {'rate': 0.000975, 'unit': 'segundo'}     # $0.000975 por segundo
+    },
+    'video': {
+        'seedance': {'rate': 0.15, 'unit': 'segundo'},      # $0.15 por segundo
+        'pixverse': {'rate': 0.010, 'unit': 'unit'},        # $0.010 por unit (calculado por duración/resolución)
+        'veo3': {'rate': 0.40, 'unit': 'segundo'}           # $0.40 por segundo
+    },
+    'sticker': {'rate': 0.055, 'unit': 'sticker'}           # $0.055 por sticker
+}
+
+def calculate_item_cost(item):
+    """Calcular el costo de un item individual basado en sus características reales"""
+    item_type = item.get('tipo', 'imagen')
+    archivo_local = item.get('archivo_local', '')
+    modelo = item.get('modelo', '').lower()
+    parametros = item.get('parametros', {})
+    
+    # Normalizar tipos de video incorrectos
+    if item_type == 'video_seedance':
+        item_type = 'video'
+    elif item_type == 'video_anime':
+        item_type = 'video'
+    
+    # Variables para el cálculo
+    cost = 0
+    model_info = ""
+    calculation_details = ""
+    
+    if item_type == 'imagen':
+        # Detectar modelo de imagen
+        if 'kandinsky' in archivo_local.lower() or 'kandinsky' in modelo:
+            model_key = 'kandinsky'
+            # Usar tiempo guardado o estimar basado en parámetros
+            seconds = item.get('processing_time', 12)  # Tiempo real si está guardado
+            if 'num_inference_steps' in parametros:
+                # Estimar basado en steps (más steps = más tiempo)
+                steps = parametros['num_inference_steps']
+                seconds = max(8, min(15, steps * 0.4))  # Entre 8-15 segundos según steps
+            cost = COST_RATES['imagen'][model_key]['rate'] * seconds
+            model_info = f"Kandinsky ({seconds:.1f}s)"
+            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} × {seconds:.1f}s"
+            
+        elif 'ssd' in archivo_local.lower() or 'ssd' in modelo:
+            model_key = 'ssd_1b'
+            # Usar tiempo guardado o estimar basado en parámetros
+            seconds = item.get('processing_time', 6)  # Tiempo real si está guardado
+            if 'num_inference_steps' in parametros:
+                # Estimar basado en steps (más steps = más tiempo)
+                steps = parametros['num_inference_steps']
+                seconds = max(4, min(10, steps * 0.2))  # Entre 4-10 segundos según steps
+            cost = COST_RATES['imagen'][model_key]['rate'] * seconds
+            model_info = f"SSD-1B ({seconds:.1f}s)"
+            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} × {seconds:.1f}s"
+            
+        else:  # Flux Pro por defecto
+            model_key = 'flux_pro'
+            cost = COST_RATES['imagen'][model_key]['rate']
+            model_info = "Flux Pro"
+            calculation_details = f"${COST_RATES['imagen'][model_key]['rate']} por imagen"
+            
+    elif item_type == 'video':
+        # Detectar modelo de video
+        if 'seedance' in archivo_local.lower() or 'seedance' in modelo:
+            model_key = 'seedance'
+            # Usar duración guardada o estimar (generalmente 5 segundos)
+            seconds = item.get('video_duration', 5)
+            cost = COST_RATES['video'][model_key]['rate'] * seconds
+            model_info = f"Seedance ({seconds}s)"
+            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
+            
+        elif 'pixverse' in archivo_local.lower() or 'pixverse' in modelo:
+            model_key = 'pixverse'
+            # Para Pixverse usar units calculadas por duración y resolución
+            units = item.get('pixverse_units', 1)  # Units reales si están guardadas
+            
+            # Si no tenemos units guardadas, estimar basado en parámetros
+            if units == 1 and parametros:
+                # Estimar units basado en duración y resolución
+                duration = parametros.get('duration', '5s')
+                resolution = parametros.get('resolution', '720p')
+                
+                # Convertir duración a número
+                duration_num = 5  # Por defecto
+                if isinstance(duration, str) and duration.endswith('s'):
+                    duration_num = int(duration[:-1])
+                elif isinstance(duration, (int, float)):
+                    duration_num = duration
+                
+                # Calcular units basado en duración y resolución
+                base_units = duration_num * 6  # Base: 6 units por segundo
+                if '1080p' in str(resolution):
+                    units = base_units * 1.5  # 50% más para 1080p
+                elif '540p' in str(resolution):
+                    units = base_units * 0.7  # 30% menos para 540p
+                else:  # 720p
+                    units = base_units
+                
+                units = round(units, 1)
+            
+            cost = COST_RATES['video'][model_key]['rate'] * units
+            model_info = f"Pixverse ({units} units)"
+            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {units} units"
+            
+        elif 'veo3' in archivo_local.lower() or 'veo' in modelo:
+            model_key = 'veo3'
+            # Usar duración guardada o estimar (generalmente 5 segundos)
+            seconds = item.get('video_duration', 5)
+            cost = COST_RATES['video'][model_key]['rate'] * seconds
+            model_info = f"VEO 3 Fast ({seconds}s)"
+            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
+            
+        else:
+            # Video genérico - usar Seedance como default
+            model_key = 'seedance'
+            seconds = item.get('video_duration', 5)
+            cost = COST_RATES['video'][model_key]['rate'] * seconds
+            model_info = f"Video genérico ({seconds}s)"
+            calculation_details = f"${COST_RATES['video'][model_key]['rate']} × {seconds}s"
+            
+    elif item_type == 'sticker':
+        cost = COST_RATES['sticker']['rate']
+        model_info = "Sticker Flux Pro"
+        calculation_details = f"${COST_RATES['sticker']['rate']} por sticker"
+    
+    return cost, model_info, calculation_details
+
 # Inicializar estado de sesión para navegación
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'generator'
@@ -1687,18 +1818,18 @@ if st.session_state.current_page == 'generator':
                 
                 # Asignar icono según el tipo y modelo
                 if tipo.lower() == 'imagen':
-                    if 'kandinsky' in archivo_local.lower() if archivo_local else False:
+                    if 'kandinsky' in archivo_local.lower() if archivo_local else False or 'kandinsky' in modelo.lower():
                         icon = "🎨"
-                    elif 'ssd' in archivo_local.lower() if archivo_local else False:
+                    elif 'ssd' in archivo_local.lower() if archivo_local else False or 'ssd' in modelo.lower():
                         icon = "⚡"
                     else:
                         icon = "🖼️"  # Flux Pro por defecto
                 elif tipo.lower() == 'video':
-                    if 'seedance' in archivo_local.lower() if archivo_local else False:
+                    if 'seedance' in archivo_local.lower() if archivo_local else False or 'seedance' in modelo.lower():
                         icon = "🎬"
-                    elif 'pixverse' in archivo_local.lower() if archivo_local else False:
+                    elif 'pixverse' in archivo_local.lower() if archivo_local else False or 'pixverse' in modelo.lower():
                         icon = "🎭"
-                    elif modelo == "VEO 3 Fast" or 'veo3' in archivo_local.lower() if archivo_local else False:
+                    elif 'veo' in modelo.lower() or 'veo3' in archivo_local.lower() if archivo_local else False:
                         icon = "🚀"
                     else:
                         icon = "📹"  # Video genérico
@@ -1912,7 +2043,7 @@ elif st.session_state.current_page == 'biblioteca':
         total_imagenes = len([h for h in history if h.get('tipo') == 'imagen'])
         total_videos = len([h for h in history if h.get('tipo') == 'video'])
         total_stickers = len([h for h in history if h.get('tipo') == 'sticker'])
-        total_cost_usd = sum(0.052 if h.get('tipo') in ['imagen', 'sticker'] else 0.15 for h in history)
+        total_cost_usd = sum(calculate_item_cost(h)[0] for h in history)
         
         with stats_col1:
             st.metric("📊 Total", total_items)
@@ -2138,8 +2269,8 @@ elif st.session_state.current_page == 'biblioteca':
                 with col1:
                     st.markdown(f"<div style='text-align: center; padding: 8px;'><h5 style='margin: 0; color: #2c3e50;'>🎯 {selected_item.get('tipo', 'N/A').title()}</h5><small style='color: #6c757d;'>📅 {selected_item.get('fecha', 'N/A')[:10]}</small></div>", unsafe_allow_html=True)
                 with col2:
-                    tipo = selected_item.get('tipo', 'imagen')
-                    cost_usd = 0.052 if tipo == 'imagen' or tipo == 'sticker' else 0.15
+                    # Usar la función de cálculo real en lugar del hardcodeado
+                    cost_usd, model_info, calculation_details = calculate_item_cost(selected_item)
                     st.markdown(f"<div style='text-align: center; padding: 8px;'><h5 style='margin: 0; color: #495057;'>🔗 {selected_item.get('modelo', 'N/A')[:15]}</h5><div style='font-size: 18px; font-weight: bold; color: #28a745; margin-top: 5px;'>💰 ${cost_usd:.3f}</div></div>", unsafe_allow_html=True)
                 with col3:
                     st.markdown("<div style='text-align: center; padding: 8px;'>", unsafe_allow_html=True)
@@ -2210,6 +2341,11 @@ elif st.session_state.current_page == 'biblioteca':
                 # Prompt en área más pequeña
                 st.markdown("**📝 Prompt:**")
                 st.text_area("", value=selected_item.get('prompt', 'Sin prompt disponible'), height=80, disabled=True, label_visibility="collapsed")
+                
+                # Detalles del cálculo de costo
+                st.markdown("**💰 Detalles del Costo:**")
+                st.caption(f"🔢 **Modelo:** {model_info}")
+                st.caption(f"📊 **Cálculo:** {calculation_details}")
                 
                 # Fila inferior: Botones de acceso estandarizados
                 archivo_local = selected_item.get('archivo_local', '')
