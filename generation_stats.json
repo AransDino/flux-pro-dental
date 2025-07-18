@@ -1,13 +1,13 @@
 {
   "🖼️ Imagen (Flux Pro)": {
-    "total": 5,
+    "total": 6,
     "exitosas": 2,
-    "tiempo_promedio": 9.660609513521194
+    "tiempo_promedio": 9.679313316941261
   },
   "🚀 Video (VEO 3 Fast)": {
-    "total": 2,
-    "exitosas": 2,
-    "tiempo_promedio": 60.94303357601166
+    "total": 3,
+    "exitosas": 3,
+    "tiempo_promedio": 63.084427654743195
   },
   "⚡ Imagen (SSD-1B)": {
     "total": 6,

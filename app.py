@@ -1416,11 +1416,11 @@ if st.session_state.current_page == 'generator':
                         model_name = "Kandinsky"
                         bg_color = "#f093fb"
                     elif "ssd" in model.lower():
-                        model_icon = "⚡"
+                        model_icon = "🎥"
                         model_name = "SSD-1B"
                         bg_color = "#ffc107"
                     elif "veo" in model.lower():
-                        model_icon = "🚀"
+                        model_icon = "🎥"
                         model_name = "VEO 3"
                         bg_color = "#4ECDC4"
                     elif "pixverse" in model.lower():
@@ -1826,13 +1826,13 @@ if st.session_state.current_page == 'generator':
                         icon = "🖼️"  # Flux Pro por defecto
                 elif tipo.lower() == 'video':
                     if 'seedance' in archivo_local.lower() if archivo_local else False or 'seedance' in modelo.lower():
-                        icon = "🎬"
+                        icon = "🎬"  # Seedance - clapperboard profesional
                     elif 'pixverse' in archivo_local.lower() if archivo_local else False or 'pixverse' in modelo.lower():
-                        icon = "🎭"
+                        icon = "🎭"  # Pixverse - anime/artístico
                     elif 'veo' in modelo.lower() or 'veo3' in archivo_local.lower() if archivo_local else False:
-                        icon = "🚀"
+                        icon = "🎥"  # VEO 3 Fast - cámara profesional
                     else:
-                        icon = "📹"  # Video genérico
+                        icon = "📹"  # Video genérico - videocámara
                 elif tipo.lower() == 'sticker':
                     icon = "🏷️"
                 elif tipo.lower() == 'media':
@@ -2397,3 +2397,5 @@ elif st.session_state.current_page == 'biblioteca':
         if st.button("🚀 Ir al Generador"):
             st.session_state.current_page = 'generator'
             st.rerun()
+
+
