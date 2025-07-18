@@ -74,22 +74,20 @@ def generate_video_pixverse(prompt, **params):
 
 # Función para generar stickers
 def generate_sticker(prompt, **params):
-    # Modificar el prompt para que sea más específico para stickers
-    sticker_prompt = f"sticker design, {prompt}, clean background, cartoon style, simple design, bright colors, outlined, digital art"
-    
-    output = replicate.run(
-        "black-forest-labs/flux-pro",
+    # Usar el modelo específico de stickers de fofr en lugar de flux-pro
+    prediction = replicate.predictions.create(
+        model="fofr/sticker-maker",
         input={
-            "prompt": sticker_prompt,
+            "prompt": prompt,
+            "steps": 25,
             "width": 1024,
             "height": 1024,
-            "num_outputs": 1,
-            "guidance_scale": 7.5,
-            "num_inference_steps": 50,
-            "safety_tolerance": 2
+            "upscale": 2,
+            "upscale_steps": 10,
+            "negative_prompt": "blurry, bad quality, distorted"
         }
     )
-    return output
+    return prediction
 
 # Función para generar imágenes con Kandinsky 2.2
 def generate_kandinsky(prompt, **params):
@@ -245,7 +243,7 @@ with st.sidebar:
     # Selector de tipo de contenido
     content_type = st.selectbox(
         "🎯 Tipo de contenido:",
-        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)", "🏷️ Sticker (Flux Pro)"],
+        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)", "🏷️ Sticker Maker"],
         help="Selecciona el tipo de contenido que quieres generar"
     )
     
@@ -1753,7 +1751,7 @@ elif st.session_state.current_page == 'biblioteca':
             sort_order = st.selectbox("Ordenar por:", ["Más reciente", "Más antiguo", "Tipo"])
         
         with filter_col3:
-            items_per_row = st.slider("Items por fila:", 2, 6, 3)
+            items_per_row = st.slider("Items por fila:", 2, 6, 6)
         
         with filter_col4:
             image_size = st.selectbox("Tamaño de vista previa:", ["Pequeño", "Mediano", "Grande", "Extra Grande"], index=1)
@@ -2021,7 +2019,7 @@ elif st.session_state.current_page == 'biblioteca':
                 
                 # Prompt en área más pequeña
                 st.markdown("**📝 Prompt:**")
-                st.text_area("", value=selected_item.get('prompt', 'Sin prompt disponible'), height=80, disabled=True, label_visibility="collapsed")
+                st.text_area("Prompt completo", value=selected_item.get('prompt', 'Sin prompt disponible'), height=80, disabled=True, label_visibility="collapsed")
                 
                 # Detalles del cálculo de costo
                 st.markdown("**💰 Detalles del Costo:**")
