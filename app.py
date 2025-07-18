@@ -16,7 +16,8 @@ import traceback
 from utils import (
     load_history, save_to_history, calculate_item_cost, 
     load_replicate_token, download_and_save_file, get_logo_base64,
-    HISTORY_DIR, HISTORY_FILE, COST_RATES
+    HISTORY_DIR, HISTORY_FILE, COST_RATES,
+    create_backup, restore_backup, list_available_backups, delete_backup
 )
 
 # Configurar la página
@@ -1949,137 +1950,296 @@ elif st.session_state.current_page == 'biblioteca':
 def show_config_modal():
     """Modal moderno de configuración con opciones de control de la aplicación"""
     
-    # Centrar todo el contenido del modal
-    col_left, col_center, col_right = st.columns([1, 3, 1])
+    # Tabs para organizar la configuración
+    tab1, tab2 = st.tabs(["🎛️ Control de Aplicación", "💾 Backup y Restauración"])
     
-    with col_center:
-        # Header mejorado con estilo
+    with tab1:
+        # Centrar todo el contenido del modal
+        col_left, col_center, col_right = st.columns([1, 3, 1])
+        
+        with col_center:
+            # Header mejorado con estilo
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                color: white;
+                margin-bottom: 20px;
+                width: 100%;
+            ">
+                <h3 style="margin: 0; font-weight: bold;">🎛️ Opciones de Control</h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestiona el estado y comportamiento de la aplicación</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botones de acción centrados
+            col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Botón Reiniciar con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #4ECDC4, #44A08D);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🔄</div>
+                <div style="color: white; font-weight: bold;">REINICIAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🔄 Reiniciar", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_reiniciar_btn",
+                         help="Recarga la aplicación manteniendo la sesión"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_restart_modal = True
+                st.rerun()
+        
+        with col2:
+            # Botón Detener con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">❌</div>
+                <div style="color: white; font-weight: bold;">DETENER</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("❌ Detener", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_detener_btn",
+                         help="Detiene la ejecución de Streamlit"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_stop_modal = True
+                st.rerun()
+        
+        with col3:
+            # Botón Cerrar Servidor con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #dc3545, #c82333);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+                animation: pulse 2s infinite;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🚨</div>
+                <div style="color: white; font-weight: bold;">CERRAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🚨 Cerrar Servidor", 
+                         use_container_width=True, 
+                         type="primary",
+                         key="modal_cerrar_servidor_btn",
+                         help="Cierra completamente el servidor"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_shutdown_modal = True
+                st.rerun()
+        
+        # Separador con estilo
         st.markdown("""
         <div style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            margin: 20px 0;
+            border-radius: 1px;
+        "></div>
+        """, unsafe_allow_html=True)
+        
+        # Información adicional con mejor diseño
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        ">
+            <h4 style="margin-top: 0; color: #2c3e50;">💡 Información de Controles</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #4ECDC4; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🔄</span>
+                    <span><strong>Reiniciar:</strong> Recarga la página actual sin cerrar el servidor</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #FF6B6B; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">❌</span>
+                    <span><strong>Detener:</strong> Para la ejecución pero mantiene el servidor activo</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🚨</span>
+                    <span><strong>Cerrar Servidor:</strong> Termina completamente la aplicación</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with tab2:
+        # Header de backup
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
             color: white;
             margin-bottom: 20px;
-            width: 100%;
         ">
-            <h3 style="margin: 0; font-weight: bold;">🎛️ Opciones de Control</h3>
-            <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestiona el estado y comportamiento de la aplicación</p>
+            <h3 style="margin: 0; font-weight: bold;">💾 Gestión de Backups</h3>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Respalda y restaura tus datos de la aplicación</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Botones de acción centrados
-        col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        # Botón Reiniciar con estilo mejorado
-        st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #4ECDC4, #44A08D);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 10px;
-        ">
-            <div style="color: white; font-size: 24px; margin-bottom: 5px;">🔄</div>
-            <div style="color: white; font-weight: bold;">REINICIAR</div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Sección de crear backup
+        st.subheader("📦 Crear Nuevo Backup")
         
-        if st.button("🔄 Reiniciar", 
-                     use_container_width=True, 
-                     type="secondary",
-                     key="modal_reiniciar_btn",
-                     help="Recarga la aplicación manteniendo la sesión"):
-            st.session_state.show_config_modal = False
-            st.session_state.show_restart_modal = True
-            st.rerun()
-    
-    with col2:
-        # Botón Detener con estilo mejorado
-        st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 10px;
-        ">
-            <div style="color: white; font-size: 24px; margin-bottom: 5px;">❌</div>
-            <div style="color: white; font-weight: bold;">DETENER</div>
-        </div>
-        """, unsafe_allow_html=True)
+        col1, col2 = st.columns([2, 1])
         
-        if st.button("❌ Detener", 
-                     use_container_width=True, 
-                     type="secondary",
-                     key="modal_detener_btn",
-                     help="Detiene la ejecución de Streamlit"):
-            st.session_state.show_config_modal = False
-            st.session_state.show_stop_modal = True
-            st.rerun()
-    
-    with col3:
-        # Botón Cerrar Servidor con estilo mejorado
-        st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        ">
-            <div style="color: white; font-size: 24px; margin-bottom: 5px;">🚨</div>
-            <div style="color: white; font-weight: bold;">CERRAR</div>
-        </div>
-        """, unsafe_allow_html=True)
+        with col1:
+            st.markdown("""
+            **El backup incluirá:**
+            - 📊 Estadísticas de generación (`generation_stats.json`)
+            - 📋 Historial de contenido (`history.json`)
+            - 🖼️ Imágenes y videos generados
+            - 📄 Metadatos del backup
+            """)
         
-        if st.button("� Cerrar Servidor", 
-                     use_container_width=True, 
-                     type="primary",
-                     key="modal_cerrar_servidor_btn",
-                     help="Cierra completamente el servidor"):
-            st.session_state.show_config_modal = False
-            st.session_state.show_shutdown_modal = True
-            st.rerun()
-    
-    # Separador con estilo
-    st.markdown("""
-    <div style="
-        height: 2px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-        margin: 20px 0;
-        border-radius: 1px;
-    "></div>
-    """, unsafe_allow_html=True)
-    
-    # Información adicional con mejor diseño
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 4px solid #007bff;
-    ">
-        <h4 style="margin-top: 0; color: #2c3e50;">💡 Información de Controles</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="background: #4ECDC4; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🔄</span>
-                <span><strong>Reiniciar:</strong> Recarga la página actual sin cerrar el servidor</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="background: #FF6B6B; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">❌</span>
-                <span><strong>Detener:</strong> Para la ejecución pero mantiene el servidor activo</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🚨</span>
-                <span><strong>Cerrar Servidor:</strong> Termina completamente la aplicación</span>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        with col2:
+            if st.button("💾 Crear Backup", 
+                         type="primary", 
+                         use_container_width=True,
+                         key="create_backup_btn"):
+                with st.spinner("Creando backup..."):
+                    success, message, backup_path = create_backup()
+                    if success:
+                        st.success(f"✅ {message}")
+                        if backup_path:
+                            st.info(f"📁 Guardado en: `{backup_path}`")
+                    else:
+                        st.error(f"❌ {message}")
+        
+        st.divider()
+        
+        # Sección de backups disponibles
+        st.subheader("📂 Backups Disponibles")
+        
+        backups = list_available_backups()
+        
+        if backups:
+            for i, backup in enumerate(backups):
+                with st.expander(f"📦 {backup['filename']} ({backup['size_mb']} MB)", expanded=False):
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    
+                    with col1:
+                        st.write(f"**📅 Creado:** {backup['created']}")
+                        st.write(f"**📊 Tamaño:** {backup['size_mb']} MB")
+                        
+                        if backup['metadata']:
+                            metadata = backup['metadata']
+                            files_info = metadata.get('files_included', {})
+                            st.write(f"**📁 Archivos incluidos:**")
+                            st.write(f"- Stats: {'✅' if files_info.get('generation_stats') else '❌'}")
+                            st.write(f"- Historial: {'✅' if files_info.get('history_json') else '❌'}")
+                            st.write(f"- Media: {files_info.get('media_files', 0)} archivos")
+                    
+                    with col2:
+                        if st.button("🔄 Restaurar", 
+                                   key=f"restore_{i}",
+                                   type="secondary",
+                                   use_container_width=True,
+                                   help="Restaurar este backup"):
+                            with st.spinner("Restaurando backup..."):
+                                success, message = restore_backup(backup['full_path'])
+                                if success:
+                                    st.success(f"✅ {message}")
+                                    st.balloons()
+                                    st.info("🔄 Reinicia la aplicación para ver los cambios")
+                                else:
+                                    st.error(f"❌ {message}")
+                    
+                    with col3:
+                        if st.button("🗑️ Eliminar", 
+                                   key=f"delete_{i}",
+                                   type="secondary",
+                                   use_container_width=True,
+                                   help="Eliminar este backup"):
+                            if st.button(f"⚠️ Confirmar eliminación", 
+                                       key=f"confirm_delete_{i}",
+                                       type="primary"):
+                                success, message = delete_backup(backup['filename'])
+                                if success:
+                                    st.success(f"✅ {message}")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ {message}")
+        else:
+            st.info("📭 No hay backups disponibles. Crea tu primer backup usando el botón de arriba.")
+        
+        st.divider()
+        
+        # Sección de restaurar desde archivo
+        st.subheader("📁 Restaurar desde Archivo")
+        
+        uploaded_file = st.file_uploader(
+            "Selecciona un archivo de backup (.zip)",
+            type=['zip'],
+            help="Sube un archivo de backup previamente creado"
+        )
+        
+        if uploaded_file is not None:
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.write(f"**Archivo seleccionado:** {uploaded_file.name}")
+                st.write(f"**Tamaño:** {uploaded_file.size / (1024*1024):.2f} MB")
+            
+            with col2:
+                if st.button("🔄 Restaurar Archivo", 
+                           type="primary",
+                           use_container_width=True):
+                    # Guardar archivo temporal
+                    temp_path = Path(f"temp_{uploaded_file.name}")
+                    try:
+                        with open(temp_path, "wb") as f:
+                            f.write(uploaded_file.getvalue())
+                        
+                        with st.spinner("Restaurando desde archivo..."):
+                            success, message = restore_backup(str(temp_path))
+                            
+                        # Limpiar archivo temporal
+                        temp_path.unlink()
+                        
+                        if success:
+                            st.success(f"✅ {message}")
+                            st.balloons()
+                            st.info("🔄 Reinicia la aplicación para ver los cambios")
+                        else:
+                            st.error(f"❌ {message}")
+                            
+                    except Exception as e:
+                        if temp_path.exists():
+                            temp_path.unlink()
+                        st.error(f"❌ Error al procesar archivo: {str(e)}")
+        
+        # Información de seguridad
+        st.info("""
+        ⚠️ **Importante:** 
+        - Se crea automáticamente un backup de seguridad antes de restaurar
+        - Los backups incluyen todos tus datos importantes
+        - Reinicia la aplicación después de restaurar para ver los cambios
+        """)
     
     # El diálogo se cierra automáticamente al hacer clic fuera o con ESC
 

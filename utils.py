@@ -846,3 +846,232 @@ def round_cost(cost: float, decimals: int = 3) -> float:
         float: Costo redondeado
     """
     return round(cost, decimals)
+
+
+# ===============================
+# FUNCIONES DE BACKUP Y RESTAURACIÓN
+# ===============================
+
+def create_backup() -> Tuple[bool, str, Optional[str]]:
+    """
+    Crear backup completo de todos los datos de la aplicación
+    
+    Returns:
+        Tuple[bool, str, Optional[str]]: (éxito, mensaje, ruta_del_backup)
+    """
+    import zipfile
+    import shutil
+    from datetime import datetime
+    
+    try:
+        # Crear nombre único para el backup
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"ai_models_backup_{timestamp}.zip"
+        backup_path = Path(backup_filename)
+        
+        # Crear archivo ZIP
+        with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            
+            # 1. Respaldar generation_stats.json
+            stats_file = Path("generation_stats.json")
+            if stats_file.exists():
+                zipf.write(stats_file, "generation_stats.json")
+            
+            # 2. Respaldar history.json
+            if HISTORY_FILE.exists():
+                zipf.write(HISTORY_FILE, "historial/history.json")
+            
+            # 3. Respaldar todos los archivos multimedia del historial
+            if HISTORY_DIR.exists():
+                for file_path in HISTORY_DIR.iterdir():
+                    if file_path.is_file() and file_path.name != "history.json":
+                        # Incluir solo archivos multimedia comunes
+                        if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.mov', '.avi']:
+                            zipf.write(file_path, f"historial/{file_path.name}")
+            
+            # 4. Crear archivo de metadatos del backup
+            metadata = {
+                "backup_date": timestamp,
+                "app_name": "AI Models Pro Generator",
+                "backup_version": "1.0",
+                "files_included": {
+                    "generation_stats": stats_file.exists(),
+                    "history_json": HISTORY_FILE.exists(),
+                    "media_files": len([f for f in HISTORY_DIR.iterdir() 
+                                      if f.is_file() and f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.mov', '.avi']]) if HISTORY_DIR.exists() else 0
+                }
+            }
+            
+            # Añadir metadatos al ZIP
+            zipf.writestr("backup_metadata.json", json.dumps(metadata, indent=2))
+        
+        # Calcular tamaño del backup
+        backup_size = backup_path.stat().st_size / (1024 * 1024)  # MB
+        
+        return True, f"Backup creado exitosamente: {backup_filename} ({backup_size:.1f} MB)", str(backup_path)
+        
+    except Exception as e:
+        return False, f"Error al crear backup: {str(e)}", None
+
+
+def restore_backup(backup_file_path: str) -> Tuple[bool, str]:
+    """
+    Restaurar backup desde archivo ZIP
+    
+    Args:
+        backup_file_path: Ruta al archivo de backup
+        
+    Returns:
+        Tuple[bool, str]: (éxito, mensaje)
+    """
+    import zipfile
+    import shutil
+    
+    try:
+        backup_path = Path(backup_file_path)
+        
+        if not backup_path.exists():
+            return False, "El archivo de backup no existe"
+        
+        if not backup_path.suffix.lower() == '.zip':
+            return False, "El archivo debe ser un ZIP válido"
+        
+        # Crear backup de seguridad de los datos actuales
+        current_backup_result = create_backup()
+        if current_backup_result[0]:
+            safety_backup = current_backup_result[2]
+        
+        # Extraer y validar el backup
+        with zipfile.ZipFile(backup_path, 'r') as zipf:
+            
+            # Verificar que es un backup válido
+            file_list = zipf.namelist()
+            if "backup_metadata.json" not in file_list:
+                return False, "Archivo de backup inválido (falta metadata)"
+            
+            # Leer metadatos
+            metadata_content = zipf.read("backup_metadata.json").decode('utf-8')
+            metadata = json.loads(metadata_content)
+            
+            # Crear directorio temporal para extraer
+            temp_dir = Path("temp_restore")
+            temp_dir.mkdir(exist_ok=True)
+            
+            try:
+                # Extraer todos los archivos
+                zipf.extractall(temp_dir)
+                
+                # Restaurar generation_stats.json
+                temp_stats = temp_dir / "generation_stats.json"
+                if temp_stats.exists():
+                    shutil.copy2(temp_stats, "generation_stats.json")
+                
+                # Restaurar history.json
+                temp_history = temp_dir / "historial" / "history.json"
+                if temp_history.exists():
+                    HISTORY_DIR.mkdir(exist_ok=True)
+                    shutil.copy2(temp_history, HISTORY_FILE)
+                
+                # Restaurar archivos multimedia
+                temp_historial_dir = temp_dir / "historial"
+                if temp_historial_dir.exists():
+                    HISTORY_DIR.mkdir(exist_ok=True)
+                    for file_path in temp_historial_dir.iterdir():
+                        if file_path.is_file() and file_path.name != "history.json":
+                            dest_path = HISTORY_DIR / file_path.name
+                            shutil.copy2(file_path, dest_path)
+                
+                # Limpiar directorio temporal
+                shutil.rmtree(temp_dir)
+                
+                backup_date = metadata.get("backup_date", "desconocida")
+                files_count = sum([
+                    1 if metadata.get("files_included", {}).get("generation_stats", False) else 0,
+                    1 if metadata.get("files_included", {}).get("history_json", False) else 0,
+                    metadata.get("files_included", {}).get("media_files", 0)
+                ])
+                
+                return True, f"Backup restaurado exitosamente. Fecha: {backup_date}, Archivos: {files_count}"
+                
+            except Exception as e:
+                # Limpiar directorio temporal si hay error
+                if temp_dir.exists():
+                    shutil.rmtree(temp_dir)
+                raise e
+                
+    except Exception as e:
+        return False, f"Error al restaurar backup: {str(e)}"
+
+
+def list_available_backups() -> List[Dict[str, Any]]:
+    """
+    Listar todos los backups disponibles en el directorio actual
+    
+    Returns:
+        List[Dict]: Lista de backups con información
+    """
+    backups = []
+    current_dir = Path(".")
+    
+    # Buscar archivos de backup
+    for file_path in current_dir.glob("ai_models_backup_*.zip"):
+        try:
+            # Obtener información del archivo
+            stat = file_path.stat()
+            size_mb = stat.st_size / (1024 * 1024)
+            modified_time = datetime.fromtimestamp(stat.st_mtime)
+            
+            # Intentar leer metadatos si es posible
+            metadata = None
+            try:
+                import zipfile
+                with zipfile.ZipFile(file_path, 'r') as zipf:
+                    if "backup_metadata.json" in zipf.namelist():
+                        metadata_content = zipf.read("backup_metadata.json").decode('utf-8')
+                        metadata = json.loads(metadata_content)
+            except:
+                pass
+            
+            backup_info = {
+                "filename": file_path.name,
+                "full_path": str(file_path),
+                "size_mb": round(size_mb, 2),
+                "created": modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "metadata": metadata
+            }
+            
+            backups.append(backup_info)
+            
+        except Exception:
+            continue
+    
+    # Ordenar por fecha de creación (más reciente primero)
+    backups.sort(key=lambda x: x["created"], reverse=True)
+    
+    return backups
+
+
+def delete_backup(backup_filename: str) -> Tuple[bool, str]:
+    """
+    Eliminar un archivo de backup específico
+    
+    Args:
+        backup_filename: Nombre del archivo de backup
+        
+    Returns:
+        Tuple[bool, str]: (éxito, mensaje)
+    """
+    try:
+        backup_path = Path(backup_filename)
+        
+        if not backup_path.exists():
+            return False, "El archivo de backup no existe"
+        
+        if not backup_path.name.startswith("ai_models_backup_"):
+            return False, "Solo se pueden eliminar archivos de backup válidos"
+        
+        backup_path.unlink()
+        return True, f"Backup {backup_filename} eliminado exitosamente"
+        
+    except Exception as e:
+        return False, f"Error al eliminar backup: {str(e)}"
