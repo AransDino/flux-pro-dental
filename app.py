@@ -16,7 +16,7 @@ import traceback
 from utils import (
     load_history, save_to_history, calculate_item_cost, 
     load_replicate_token, download_and_save_file, get_logo_base64,
-    HISTORY_DIR, HISTORY_FILE, COST_RATES,
+    HISTORY_DIR, HISTORY_FILE, COST_RATES, BACKUPS_DIR,
     create_backup, restore_backup, list_available_backups, delete_backup
 )
 
@@ -1946,7 +1946,7 @@ elif st.session_state.current_page == 'biblioteca':
 
 
 # Modal de configuración usando st.dialog (moderno)
-@st.dialog("⚙️ Configuración de la Aplicación")
+@st.dialog("⚙️ Configuración de la Aplicación", width="large")
 def show_config_modal():
     """Modal moderno de configuración con opciones de control de la aplicación"""
     
@@ -2170,20 +2170,56 @@ def show_config_modal():
                                     st.error(f"❌ {message}")
                     
                     with col3:
-                        if st.button("🗑️ Eliminar", 
-                                   key=f"delete_{i}",
-                                   type="secondary",
-                                   use_container_width=True,
-                                   help="Eliminar este backup"):
-                            if st.button(f"⚠️ Confirmar eliminación", 
-                                       key=f"confirm_delete_{i}",
-                                       type="primary"):
-                                success, message = delete_backup(backup['filename'])
-                                if success:
-                                    st.success(f"✅ {message}")
+                        # Usar una clave única para este backup específico
+                        backup_id = backup['filename'].replace('.zip', '').replace('ai_models_backup_', '')
+                        confirm_key = f"confirm_delete_{backup_id}"
+                        
+                        # Container para mantener el estado de la UI
+                        delete_container = st.container()
+                        
+                        with delete_container:
+                            if st.session_state.get(confirm_key, False):
+                                # Mostrar confirmación con advertencia visual
+                                st.warning("⚠️ ¿Eliminar definitivamente?")
+                                
+                                col3_1, col3_2 = st.columns(2)
+                                with col3_1:
+                                    if st.button("✅ Confirmar", 
+                                               key=f"yes_{backup_id}",
+                                               type="primary",
+                                               use_container_width=True):
+                                        success, message = delete_backup(backup['filename'])
+                                        if success:
+                                            st.success(f"✅ Eliminado!")
+                                            st.balloons()
+                                            # Limpiar el estado y refrescar
+                                            if confirm_key in st.session_state:
+                                                del st.session_state[confirm_key]
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"❌ {message}")
+                                            if confirm_key in st.session_state:
+                                                del st.session_state[confirm_key]
+                                
+                                with col3_2:
+                                    if st.button("❌ Cancelar", 
+                                               key=f"no_{backup_id}",
+                                               type="secondary",
+                                               use_container_width=True):
+                                        if confirm_key in st.session_state:
+                                            del st.session_state[confirm_key]
+                                        st.rerun()
+                            else:
+                                # Mostrar botón de eliminar normal
+                                if st.button("🗑️ Eliminar", 
+                                           key=f"delete_{backup_id}",
+                                           type="secondary",
+                                           use_container_width=True,
+                                           help="Eliminar este backup permanentemente"):
+                                    # Activar modo confirmación sin cerrar el modal
+                                    st.session_state[confirm_key] = True
                                     st.rerun()
-                                else:
-                                    st.error(f"❌ {message}")
         else:
             st.info("📭 No hay backups disponibles. Crea tu primer backup usando el botón de arriba.")
         
@@ -2241,14 +2277,20 @@ def show_config_modal():
         - Reinicia la aplicación después de restaurar para ver los cambios
         """)
     
+    # Botón de cerrar modal al final
+    st.divider()
+    if st.button("❌ Cerrar Configuración", type="primary", use_container_width=True, key="close_config_modal"):
+        st.session_state.show_config_modal = False
+        st.rerun()
+    
     # El diálogo se cierra automáticamente al hacer clic fuera o con ESC
 
 
 # Verificar si se debe mostrar el modal
 if st.session_state.get('show_config_modal', False):
     show_config_modal()
-    # Resetear el estado después de mostrar el modal
-    st.session_state.show_config_modal = False
+    # NO resetear el estado aquí para permitir que el modal persista
+    # st.session_state.show_config_modal = False
 
 # Modal de reinicio centrado
 @st.dialog("🔄 Reiniciando Aplicación")

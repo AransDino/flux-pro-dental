@@ -51,9 +51,11 @@ def get_model_from_filename(filename: str) -> str:
 # Configuración de directorios
 HISTORY_DIR = Path("historial")
 HISTORY_FILE = HISTORY_DIR / "history.json"
+BACKUPS_DIR = Path("backups")
 
-# Asegurar que el directorio de historial existe
+# Asegurar que los directorios existen
 HISTORY_DIR.mkdir(exist_ok=True)
+BACKUPS_DIR.mkdir(exist_ok=True)
 
 # Tarifas de modelos actualizadas (USD por segundo/imagen)
 COST_RATES = {
@@ -867,7 +869,7 @@ def create_backup() -> Tuple[bool, str, Optional[str]]:
         # Crear nombre único para el backup
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_filename = f"ai_models_backup_{timestamp}.zip"
-        backup_path = Path(backup_filename)
+        backup_path = BACKUPS_DIR / backup_filename
         
         # Crear archivo ZIP
         with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -1005,16 +1007,15 @@ def restore_backup(backup_file_path: str) -> Tuple[bool, str]:
 
 def list_available_backups() -> List[Dict[str, Any]]:
     """
-    Listar todos los backups disponibles en el directorio actual
+    Listar todos los backups disponibles en la carpeta backups/
     
     Returns:
         List[Dict]: Lista de backups con información
     """
     backups = []
-    current_dir = Path(".")
     
-    # Buscar archivos de backup
-    for file_path in current_dir.glob("ai_models_backup_*.zip"):
+    # Buscar archivos de backup en la carpeta backups/
+    for file_path in BACKUPS_DIR.glob("ai_models_backup_*.zip"):
         try:
             # Obtener información del archivo
             stat = file_path.stat()
@@ -1062,7 +1063,11 @@ def delete_backup(backup_filename: str) -> Tuple[bool, str]:
         Tuple[bool, str]: (éxito, mensaje)
     """
     try:
-        backup_path = Path(backup_filename)
+        # Si solo se proporciona el nombre, construir la ruta completa
+        if not backup_filename.startswith(str(BACKUPS_DIR)):
+            backup_path = BACKUPS_DIR / backup_filename
+        else:
+            backup_path = Path(backup_filename)
         
         if not backup_path.exists():
             return False, "El archivo de backup no existe"
@@ -1071,7 +1076,7 @@ def delete_backup(backup_filename: str) -> Tuple[bool, str]:
             return False, "Solo se pueden eliminar archivos de backup válidos"
         
         backup_path.unlink()
-        return True, f"Backup {backup_filename} eliminado exitosamente"
+        return True, f"Backup {backup_path.name} eliminado exitosamente"
         
     except Exception as e:
         return False, f"Error al eliminar backup: {str(e)}"
