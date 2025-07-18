@@ -74,17 +74,18 @@ def generate_video_pixverse(prompt, **params):
 
 # Función para generar stickers
 def generate_sticker(prompt, **params):
-    # Usar el modelo específico de stickers con replicate.run()
+    # Usar el modelo específico de stickers con la versión correcta
     output = replicate.run(
-        "fofr/sticker-maker",
+        "fofr/sticker-maker:4acb778eb059772225ec213948f0660867b2e03f277448f18cf1800b96a65a1a",
         input={
+            "steps": 17,
+            "width": 1152,
+            "height": 1152,
             "prompt": prompt,
-            "steps": 25,
-            "width": 1024,
-            "height": 1024,
-            "upscale": 2,
-            "upscale_steps": 10,
-            "negative_prompt": "blurry, bad quality, distorted"
+            "output_format": "webp",
+            "output_quality": 100,
+            "negative_prompt": "",
+            "number_of_images": 1
         }
     )
     return output
