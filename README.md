@@ -4,6 +4,24 @@
 
 Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual de alta calidad. Sistema robusto con historial dual (online/local) y gestión avanzada de archivos.
 
+## 📚 Documentación del Proyecto
+
+### 📖 **Guías de Usuario**
+- **[🚀 INICIO_RAPIDO.md](./INICIO_RAPIDO.md)** - Guía de instalación y configuración rápida
+- **[📋 HISTORIAL_SPEC.md](./HISTORIAL_SPEC.md)** - Especificación técnica del sistema de historial
+- **[💰 CORRECCIONES_COSTOS.md](./CORRECCIONES_COSTOS.md)** - Tarifas reales de Replicate y cálculos de costos
+- **[📁 ACCESO_ARCHIVOS_LOCALES.md](./ACCESO_ARCHIVOS_LOCALES.md)** - Sistema de archivos locales y enlaces duales
+
+### 🗂️ **Navegación Rápida**
+- [⚡ Instalación Automática](#-instalación-y-ejecución-automática) - Scripts de inicio automático
+- [🎯 Modelos de IA](#-modelos-de-ia-integrados) - Flux Pro, Kandinsky, VEO 3 Fast y más
+- [📊 Sistema de Estadísticas](#-sistema-de-estadísticas) - Análisis de costos y métricas
+- [💾 Gestión de Archivos](#-gestión-de-archivos-y-sistema-dual) - Sistema dual online/local
+- [🛠️ Solución de Problemas](#-solución-de-problemas) - Errores comunes y soluciones
+- [📁 Estructura del Proyecto](#-estructura-del-proyecto) - Organización de archivos
+
+---
+
 ## ✨ Características Principales
 
 ### 🎯 **Modelos de IA Integrados**
@@ -367,16 +385,86 @@ pathlib>=1.0.1
 
 Este proyecto está en desarrollo activo. Las mejoras y sugerencias son bienvenidas.
 
-## 📄 Licencia
+## � Documentación Completa
+
+### 📖 **Archivos de Documentación Disponibles**
+
+| Archivo | Descripción | Contenido Principal |
+|---------|-------------|-------------------|
+| **[📋 README.md](./README.md)** | **Documentación principal** | Instalación, uso, características completas |
+| **[🚀 INICIO_RAPIDO.md](./INICIO_RAPIDO.md)** | **Guía de inicio rápido** | Scripts automáticos, solución de problemas |
+| **[📊 HISTORIAL_SPEC.md](./HISTORIAL_SPEC.md)** | **Especificación técnica** | Sistema de historial, estructura de datos |
+| **[💰 CORRECCIONES_COSTOS.md](./CORRECCIONES_COSTOS.md)** | **Cálculos de costos** | Tarifas reales de Replicate, estimaciones |
+| **[📁 ACCESO_ARCHIVOS_LOCALES.md](./ACCESO_ARCHIVOS_LOCALES.md)** | **Sistema de archivos** | Enlaces duales, almacenamiento local |
+
+### 🗂️ **Navegación por Temas**
+
+#### **🚀 Para Empezar**
+- [Instalación automática](./INICIO_RAPIDO.md#instalación-automática)
+- [Primera configuración](./INICIO_RAPIDO.md#primera-ejecución)
+- [Solución de problemas](./INICIO_RAPIDO.md#solución-de-problemas)
+
+#### **💰 Gestión de Costos**
+- [Tarifas reales de Replicate](./CORRECCIONES_COSTOS.md#tarifas-extraídas-de-la-factura)
+- [Estimaciones por modelo](./CORRECCIONES_COSTOS.md#estimaciones-para-nuestro-historial)
+- [Sistema de cálculo automático](#sistema-de-estadísticas)
+
+#### **📊 Sistema Técnico**
+- [Estructura del historial](./HISTORIAL_SPEC.md#estructura-de-datos)
+- [Campos obligatorios](./HISTORIAL_SPEC.md#campos-obligatorios)
+- [Reglas de funcionamiento](./HISTORIAL_SPEC.md#reglas-de-funcionamiento)
+
+#### **💾 Archivos y Almacenamiento**
+- [Sistema dual online/local](./ACCESO_ARCHIVOS_LOCALES.md)
+- [Gestión de archivos](#gestión-de-archivos-y-sistema-dual)
+- [Estructura de carpetas](#estructura-del-proyecto)
+
+### ⚡ **Accesos Rápidos**
+
+```bash
+# 🚀 Ejecutar aplicación (más rápido)
+.\run_app.ps1
+
+# 📊 Ver historial de generaciones
+# → Pestaña "Historial" en la app
+
+# 💰 Revisar costos estimados  
+# → Sección "Estadísticas" en cada elemento
+
+# 🔧 Solucionar problemas
+# → Ver INICIO_RAPIDO.md#solución-de-problemas
+```
+
+### 🆕 **Últimas Actualizaciones (2025)**
+
+- ✅ **Sistema de iconos mejorado** - Iconos cinema para videos, art para imágenes
+- ✅ **Cálculos de costos unificados** - Consistencia entre historial y biblioteca  
+- ✅ **Stickers completamente integrados** - Soporte completo con icono 🏷️
+- ✅ **Detección de modelos robusta** - Múltiples métodos de identificación
+- ✅ **Documentación estructurada** - Archivos .md organizados por tema
+
+## �📄 Licencia
 
 Proyecto desarrollado por **Ayoze Benítez** para uso educativo y profesional en el ámbito odontológico.
 
 ## 🌐 Enlaces
 
-- **GitHub**: [AransDino/flux-pro-dental](https://github.com/AransDino/flux-pro-dental)
-- **Replicate**: [replicate.com](https://replicate.com)
-- **Streamlit**: [streamlit.io](https://streamlit.io)
+- **🏠 GitHub**: [AransDino/flux-pro-dental](https://github.com/AransDino/flux-pro-dental)
+- **🤖 Replicate**: [replicate.com](https://replicate.com)
+- **⚡ Streamlit**: [streamlit.io](https://streamlit.io)
+- **📚 Documentación**: Ver archivos .md del proyecto para guías específicas
 
 ---
 
-**© 2025 Ayoze Benítez - AI Models Pro Generator**
+**© 2025 Ayoze Benítez - AI Models Pro Generator v2.1**
+
+*Última actualización: 18 de julio de 2025*
+
+### 🔧 **Estado del Proyecto: Completamente Funcional**
+
+- ✅ **7 modelos de IA integrados** (Flux Pro, Kandinsky, SSD-1B, Seedance, Pixverse, VEO 3 Fast, Stickers)
+- ✅ **Sistema de costos real** basado en tarifas de Replicate
+- ✅ **Iconos cinema-themed** para videos y art-themed para imágenes  
+- ✅ **Documentación completa** en 5 archivos .md estructurados
+- ✅ **Sistema dual** online/local completamente implementado
+- ✅ **Scripts automáticos** para instalación sin complicaciones
