@@ -1,8 +1,8 @@
 {
   "🖼️ Imagen (Flux Pro)": {
-    "total": 6,
+    "total": 8,
     "exitosas": 2,
-    "tiempo_promedio": 9.679313316941261
+    "tiempo_promedio": 9.736797843128443
   },
   "🚀 Video (VEO 3 Fast)": {
     "total": 3,
@@ -18,5 +18,10 @@
     "total": 5,
     "exitosas": 0,
     "tiempo_promedio": 40.717461824417114
+  },
+  "🎬 Video (Seedance)": {
+    "total": 1,
+    "exitosas": 0,
+    "tiempo_promedio": 61.210439682006836
   }
 }
