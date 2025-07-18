@@ -1,38 +1,12 @@
-# 🦷 AI Models Pro Generato- ### 🎯### 🎯 **- **⚡- **⚡- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+# 🦷 AI Models Pro Generator - **by Ayoze Benítez**
 
-### 🎛️ **Interfaz Avanzada****: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+**Generador avanzado de imágenes y videos con IA - Sistema completo con backup y restauración integrados**
 
-### 🎛️ **Interfaz Avanzada****: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
+Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual de alta calidad. Sistema robusto con historial dual (online/local), gestión avanzada de archivos y **funcionalidad completa de backup y restauración**.
 
-### 🎛️ **Interfaz Avanzada** de IA Integrados**
-- **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
-- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
-- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaos de IA Integrados**
-- **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
-- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
-- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaux Pro**: Generación de imágenes dentales hiperrealistas
-- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
-- **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
-- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
-- **🎭 Pixverse v3.5**: Videos anime y contenido creativo
-- **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográficaGenerador avanzado de imágenes y videos con IA - by Ayoze Benítez**
-
-Una aplicación web completa desarrollada con Streamlit que integra múltiples modelos de IA para generar contenido visual de alta calidad. Sistema robusto con historial dual (online/local) y gestión avanzada de archivos.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.24+-red.svg)](https://streamlit.io)
+[![Replicate](https://img.shields.io/badge/Replicate-API-green.svg)](https://replicate.com)
 
 ## 📚 Documentación del Proyecto
 
@@ -45,6 +19,7 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
 ### 🗂️ **Navegación Rápida**
 - [⚡ Instalación Automática](#-instalación-y-ejecución-automática) - Scripts de inicio automático
 - [🎯 Modelos de IA](#-modelos-de-ia-integrados) - Flux Pro, Kandinsky, VEO 3 Fast y más
+- [💾 Sistema de Backup](#-sistema-de-backup-y-restauración-nuevo) - **NUEVO: Backup completo**
 - [📊 Sistema de Estadísticas](#-sistema-de-estadísticas) - Análisis de costos y métricas
 - [💾 Gestión de Archivos](#-gestión-de-archivos-y-sistema-dual) - Sistema dual online/local
 - [🛠️ Solución de Problemas](#-solución-de-problemas) - Errores comunes y soluciones
@@ -56,42 +31,66 @@ Una aplicación web completa desarrollada con Streamlit que integra múltiples m
 
 ### 🎯 **Modelos de IA Integrados**
 - **🖼️ Flux Pro**: Generación de imágenes dentales hiperrealistas
-- **� Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
+- **🎨 Kandinsky 2.2**: Arte abstracto y creativo de alta calidad
 - **⚡ SSD-1B**: Generación rápida de imágenes fotorrealistas
-- **�🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
+- **🎬 Seedance 1-Pro**: Videos cinematográficos para clínicas
 - **🎭 Pixverse v3.5**: Videos anime y contenido creativo
 - **🚀 VEO 3 Fast**: Videos de Google con calidad cinematográfica
 
 ### 🎛️ **Interfaz Avanzada**
 - **Sidebar dinámico** con parámetros específicos por modelo
-- **Plantillas predefinidas** para cada tipo de contenido
+- **Plantillas predefinidas** para cada tipo de contenido (11+ por modelo)
 - **Panel de control** con información en tiempo real
 - **Pestañas organizadas** (Generar / Historial)
+- **Modal de configuración** con pestañas para control y backup
+
+### 💾 **Sistema de Backup y Restauración (NUEVO)**
+- **🔄 Backup automático** - Crea copias completas de todos los datos
+- **📦 Compresión ZIP** - Archivos optimizados con metadatos incluidos
+- **🛡️ Backup de seguridad** - Se crea automáticamente antes de restaurar
+- **📁 Gestión de backups** - Lista, restaura y elimina backups existentes
+- **📤 Import/Export** - Sube archivos de backup desde cualquier ubicación
+- **✅ Validación completa** - Verificación de integridad de archivos
+
+#### **¿Qué incluye cada backup?**
+```
+ai_models_backup_YYYYMMDD_HHMMSS.zip
+├── generation_stats.json           # Estadísticas globales
+├── historial/
+│   ├── history.json                # Historial de generaciones
+│   ├── imagen_*.webp               # Imágenes generadas
+│   ├── video_*.mp4                 # Videos generados
+│   └── ...                         # Otros archivos multimedia
+└── backup_metadata.json            # Información del backup
+```
 
 ### 📊 **Sistema de Análisis y Estadísticas**
-- **Resumen global** con métricas totales
-- **Análisis de costos** en USD y EUR
+- **Resumen global** con métricas totales de rendimiento
+- **Análisis de costos** precisos en USD y EUR por modelo
 - **Estadísticas detalladas** por generación:
   - Resolución, megapixeles, pasos de procesamiento
-  - FPS, frames totales, duración
-  - Estimaciones de costo precisas
-- **Información temporal** (fecha, hora, antigüedad)
+  - FPS, frames totales, duración para videos
+  - Estimaciones de costo en tiempo real
+- **Información temporal** (fecha, hora, antigüedad relativa)
+- **Métricas visuales** con tarjetas coloridas por modelo
 
 ### 💾 **Gestión de Archivos y Sistema Dual**
-
-- **Descarga automática** de contenido generado
-- **Almacenamiento local** en carpeta `historial/`
+- **Descarga automática** de contenido generado desde Replicate
+- **Almacenamiento local** organizado en carpeta `historial/`
 - **Sistema dual de enlaces**: Online (Replicate) y Local
 - **Historial unificado** en archivo `history.json`
-- **Vista previa** integrada para imágenes
-- **Información de archivos** para videos
-- **Botones diferenciados**: Rojo para online, azul para local
-- **Verificación de archivos** antes de mostrar enlaces locales
+- **Vista previa integrada** para imágenes y videos
+- **Información detallada** de archivos (tamaño, formato, duración)
+- **Botones diferenciados**: 🔗 para online, 📁 para local
+- **Verificación automática** de archivos antes de mostrar enlaces
 
 ### 🔐 **Seguridad y Configuración**
-- **Tokens seguros** mediante archivo `config.py`
-- **Configuración ejemplo** incluida
-- **Validación de credenciales**
+- **Tokens seguros** mediante archivo `config.py` (excluido de Git)
+- **Configuración ejemplo** incluida como plantilla
+- **Validación de credenciales** en tiempo real
+- **Variables de entorno** para mayor seguridad
+
+---
 
 ## 🚀 Instalación y Ejecución (AUTOMÁTICA)
 
@@ -138,6 +137,147 @@ REPLICATE_API_TOKEN = "tu_token_de_replicate_aqui"
 3. Obtén tu token en: https://replicate.com/account/api-tokens
 4. Reinicia el script
 
+---
+
+## 💾 Sistema de Backup y Restauración (NUEVO)
+
+### **🔄 Crear Backup**
+1. Abre la aplicación y ve a **Configuración** (⚙️ en la sidebar)
+2. Selecciona la pestaña **"💾 Backup y Restauración"**
+3. Haz clic en **"💾 Crear Backup"**
+4. El archivo se guardará automáticamente como `ai_models_backup_YYYYMMDD_HHMMSS.zip`
+
+### **📥 Restaurar Backup**
+
+#### **Desde backup local:**
+1. Ve a **Configuración → Backup y Restauración**
+2. En la sección **"📂 Backups Disponibles"**, selecciona un backup
+3. Haz clic en **"🔄 Restaurar"**
+4. Reinicia la aplicación para ver los cambios
+
+#### **Desde archivo externo:**
+1. Ve a **Configuración → Backup y Restauración**
+2. En **"📁 Restaurar desde Archivo"**, sube tu archivo `.zip`
+3. Haz clic en **"🔄 Restaurar Archivo"**
+4. Reinicia la aplicación
+
+### **🛡️ Funciones de Seguridad**
+- **Backup automático** se crea antes de cualquier restauración
+- **Validación completa** de archivos ZIP
+- **Metadatos incluidos** en cada backup
+- **Limpieza automática** de archivos temporales
+
+### **📋 Gestión de Backups**
+- **Ver información detallada** (fecha, tamaño, contenido)
+- **Eliminar backups antiguos** con confirmación
+- **Lista ordenada** por fecha (más recientes primero)
+
+---
+
+## 🎯 Modelos de IA Integrados
+
+### **🖼️ Flux Pro - Imágenes Hiperrealistas**
+- **Resoluciones**: Hasta 1280x1280 píxeles
+- **Formatos**: WebP, JPG, PNG
+- **Parámetros avanzados**: Steps, Guidance, Aspect Ratio
+- **Plantillas**: 11 estilos predefinidos (Arte Digital, Fotografía, Fantasía, etc.)
+
+### **🎨 Kandinsky 2.2 - Arte Abstracto**
+- **Resoluciones**: Hasta 1280x1280 píxeles
+- **Estilo**: Arte abstracto y creativo de alta calidad
+- **Parámetros**: Pasos de inferencia, modelo prior
+- **Plantillas**: 10 estilos artísticos (Abstracto, Surrealismo, Impresionismo, etc.)
+
+### **⚡ SSD-1B - Generación Rápida**
+- **Velocidad**: Generación ultrarrápida (15-25 pasos)
+- **Calidad**: Imágenes fotorrealistas de alta calidad
+- **Parámetros**: LoRA Scale, Scheduler, Guidance Scale
+- **Plantillas**: 10 estilos dinámicos (Fantasía Épica, Elementos Naturales, etc.)
+
+### **🎬 Seedance 1-Pro - Videos Cinematográficos**
+- **Duración**: 3-10 segundos
+- **Resoluciones**: 720p, 1080p, 1440p
+- **FPS**: 12, 24, 30 fps
+- **Plantillas**: 10 estilos cinematográficos (Amanecer Épico, Ciudad Futurista, etc.)
+
+### **🎭 Pixverse v3.5 - Videos Anime**
+- **Duración**: 3-10 segundos
+- **Estilos**: Anime, 3D Animation, Clay, Cyberpunk
+- **Efectos**: Zoom, Pan, efectos de sonido
+- **Plantillas**: 10 estilos anime (Acción, Kawaii, Batalla Épica, etc.)
+
+### **🚀 VEO 3 Fast - Videos de Google**
+- **Duración**: 2-8 segundos
+- **Calidad**: Standard y High
+- **Características**: Mejora automática de prompts
+- **Plantillas**: 10 estilos épicos (Acción, Naturaleza, Persecución, etc.)
+
+---
+
+## 📊 Sistema de Estadísticas
+
+### **📈 Métricas Globales**
+- **Total de generaciones** por modelo
+- **Tasa de éxito** en tiempo real
+- **Tiempo promedio** de procesamiento
+- **Costo acumulado** en USD y EUR
+
+### **💰 Análisis de Costos**
+```python
+# Tarifas actualizadas (2024)
+COST_RATES = {
+    'imagen': {
+        'flux_pro': 0.055,      # $0.055 por imagen
+        'kandinsky': 0.005,     # $0.005 por imagen
+        'ssd1b': 0.003          # $0.003 por imagen
+    },
+    'video': {
+        'seedance': 0.02,       # $0.02 por segundo
+        'pixverse': 0.016,      # $0.016 por segundo
+        'veo3_fast': 0.125      # $0.125 por segundo
+    }
+}
+```
+
+### **📋 Información Detallada**
+- **Por generación**: Resolución, megapixeles, parámetros
+- **Por video**: FPS, frames totales, duración
+- **Temporal**: Fecha/hora exacta, antigüedad relativa
+- **Técnica**: ID de predicción, modelo específico
+
+---
+
+## 💾 Gestión de Archivos y Sistema Dual
+
+### **📁 Estructura de Archivos**
+```
+flux-pro-dental/
+├── historial/                     # Archivos descargados
+│   ├── history.json               # Historial principal
+│   ├── imagen_20240718_123456.webp
+│   ├── video_20240718_123457.mp4
+│   └── ...
+├── generation_stats.json          # Estadísticas globales
+├── ai_models_backup_*.zip          # Backups automáticos
+├── app.py                         # Aplicación principal
+├── utils.py                       # Funciones centralizadas
+└── config.py                      # Configuración (no en Git)
+```
+
+### **🔗 Sistema Dual de Enlaces**
+- **🔗 Enlaces Online (Replicate)**: Acceso directo desde Replicate
+- **📁 Enlaces Locales**: Archivos descargados automáticamente
+- **Verificación automática**: Solo muestra enlaces si los archivos existen
+- **Botones diferenciados**: Colores distintos para cada tipo
+
+### **💾 Descarga Automática**
+- **Detección de formato**: Automática según el tipo de archivo
+- **Nomenclatura estándar**: `tipo_YYYYMMDD_HHMMSS.ext`
+- **Verificación de integridad**: Validación antes de guardar
+- **Gestión de errores**: Reintentos automáticos
+
+---
+
 ## 🛠️ Instalación Manual (Opcional)
 
 Si prefieres hacer todo manualmente:
@@ -179,6 +319,8 @@ run_app.bat    # Command Prompt
 streamlit run app.py --server.port=8501
 ```
 
+---
+
 ## 🔧 Solución de Problemas
 
 ### **Error: "No se reconoce el comando"**
@@ -199,299 +341,105 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 1. Instala Python desde: https://www.python.org/downloads/
 2. Asegúrate de marcar "Add Python to PATH" durante la instalación
 
-### **Error: "Token no configurado"**
-1. Edita `config.py`
-2. Reemplaza `"tu_token_aqui"` con tu token real de Replicate
-3. Reinicia la aplicación
+### **Error: "Token de Replicate inválido"**
+1. Verifica tu token en: https://replicate.com/account/api-tokens
+2. Asegúrate de que `config.py` contiene el token correcto
+3. Reinicia la aplicación después de cambiar el token
 
-## 📋 Uso de la Aplicación
+### **Error: "Archivo de backup corrupto"**
+1. Verifica que el archivo ZIP no esté dañado
+2. Usa **"📂 Backups Disponibles"** para archivos locales
+3. Crea un nuevo backup si el problema persiste
 
-### 🖼️ **Generación de Imágenes (Flux Pro)**
-
-**Parámetros disponibles:**
-- **Pasos**: 10-50 (calidad vs velocidad)
-- **Dimensiones**: 512x512 hasta 1280x1280
-- **Guidance**: 1-10 (fuerza de guidance)
-- **Formato**: WebP, JPG, PNG
-- **Calidad**: 60-100%
-
-**Plantillas incluidas:**
-
-- 🎨 **Arte Digital**: Composiciones vibrantes y detalladas
-- � **Fotografía Realista**: Estilo fotográfico profesional
-- 🌈 **Estilo Fantástico**: Ambientes mágicos y místicos
-- 🤖 **Futurista/Sci-Fi**: Diseños cyberpunk y tecnológicos
-- 🎭 **Retrato Artístico**: Retratos con iluminación dramática
-
-### 🎬 **Generación de Videos (Seedance)**
-
-**Parámetros disponibles:**
-- **FPS**: 12, 24, 30
-- **Duración**: 3-10 segundos
-- **Resolución**: 720p, 1080p, 1440p
-- **Relación de aspecto**: 16:9, 9:16, 1:1
-- **Cámara fija**: Opcional
-
-**Plantillas incluidas:**
-
-- 🌊 **Amanecer Épico**: Paisajes cinematográficos dramáticos
-- 🏙️ **Ciudad Futurista**: Escenas urbanas nocturnas
-- 🌊 **Océano Tranquilo**: Ambientes costeros serenos
-- 🎬 **Escena Cinematográfica**: Tomas profesionales de cine
-
-### 🎭 **Generación de Videos Anime (Pixverse)**
-
-**Parámetros disponibles:**
-- **Estilo**: Anime, Realistic, Cartoon
-- **Calidad**: 540p, 720p, 1080p
-- **Efectos**: Zoom In/Out, Pan Left/Right
-- **Modo de movimiento**: Normal, Slow, Fast
-- **Prompt negativo**: Opcional
-- **Efectos de sonido**: Activable
-
-**Plantillas incluidas:**
-- 🎭 **Escena de Acción**: Batallas épicas
-- 🌸 **Personaje Kawaii**: Estilo cute
-- 🏯 **Paisaje Japonés**: Ambientes tradicionales
-- ⚔️ **Batalla Épica**: Combates dinámicos
-- 🌙 **Noche Mágica**: Magical girls
-
-## � Sistema Dual de Enlaces
-
-### **Acceso Online y Local**
-La aplicación implementa un sistema robusto de doble acceso a los archivos generados:
-
-- **🔗 Ver Online (Replicate)** - Botón rojo que abre la URL original en Replicate
-- **💾 Ver Local** - Botón azul para acceder al archivo descargado localmente
-
-### **Características del Sistema Dual**
-- **Almacenamiento redundante**: Cada generación se guarda con ambas referencias
-- **Verificación automática**: Los botones solo aparecen si los recursos están disponibles
-- **Interfaz diferenciada**: Colores distintos para identificar fácilmente cada tipo de acceso
-- **Persistencia**: El historial mantiene ambos enlaces indefinidamente
-- **Recuperación**: Sistema robusto que permite recuperar elementos faltantes
-
-### **Estructura del Historial**
-```json
-{
-  "tipo": "imagen",
-  "fecha": "2025-01-17T10:30:00",
-  "prompt": "Prompt completo preservado",
-  "url": "https://replicate.delivery/...",
-  "archivo_local": "imagen_20250117_103000.webp",
-  "parametros": {...}
-}
-```
-
-## �📊 Sistema de Estadísticas
-
-### **Resumen Global**
-- Contador de generaciones por tipo
-- Costo total acumulado en USD/EUR
-- Métricas de uso histórico
-
-### **Análisis Individual**
-- **Imágenes**: Resolución, megapixeles, costo estimado
-- **Videos**: Duración, FPS, frames totales, tamaño de archivo
-- **Temporales**: Fecha, hora, antigüedad
-
-### **Estimaciones de Costo**
-- **Flux Pro**: ~$0.05 por imagen (ajustado por resolución)
-- **Kandinsky 2.2**: ~$0.05 por imagen (con seguimiento de progreso)
-- **SSD-1B**: ~$0.03 por imagen (generación rápida)
-- **Seedance**: ~$0.10 por segundo (ajustado por calidad)
-- **Pixverse**: ~$0.08 por segundo (ajustado por calidad)
-- **VEO 3 Fast**: ~$0.12 por segundo (calidad cinematográfica de Google)
+---
 
 ## 📁 Estructura del Proyecto
 
 ```
 flux-pro-dental/
-├── 📄 app.py                 # Aplicación principal Streamlit
-├── 📄 config.py              # Configuración de tokens (no en git)
-├── 📄 config.example.py      # Plantilla de configuración
-├── 📄 generate_imagen.py     # Script CLI para imágenes
-├── 📄 video.py              # Script CLI para videos Seedance  
-├── 📄 anime.py              # Script CLI para videos anime
-├── 📄 requirements.txt       # Dependencias Python
-├── 📄 run_app.bat           # Script de inicio automático (Windows)
-├── 📄 run_app.ps1           # Script de inicio automático (PowerShell)
-├── 📄 HISTORIAL_SPEC.md     # Especificación del sistema de historial
-├── 📄 INICIO_RAPIDO.md      # Guía de inicio rápido y solución de problemas
-├── 📁 assets/               # Recursos de la aplicación
-│   ├── 🖼️ logo.jpg          # Logo alternativo
-│   └── 🖼️ logo22.jpg        # Logo principal
-├── 📁 historial/            # Sistema unificado de archivos
-│   ├── 📄 history.json      # Historial único con enlaces duales
-│   ├── 🖼️ imagen_*.webp     # Imágenes generadas (descarga local)
-│   └── 🎬 video_*.mp4       # Videos generados (descarga local)
-├── 📁 venv/                 # Entorno virtual Python (creado automáticamente)
-└── 📄 .gitignore           # Archivos excluidos de git
+├── 📄 app.py                      # Aplicación Streamlit principal
+├── 📄 utils.py                    # Funciones centralizadas y utilities
+├── 📄 config.example.py           # Plantilla de configuración
+├── 📄 config.py                   # Configuración real (Git ignored)
+├── 📄 requirements.txt            # Dependencias Python
+├── 📄 generation_stats.json       # Estadísticas globales
+├── 🔧 run_app.bat                 # Script Windows (Command Prompt)
+├── 🔧 run_app.ps1                 # Script Windows (PowerShell)
+├── 📁 historial/                  # Archivos generados y datos
+│   ├── 📄 history.json            # Historial de generaciones
+│   ├── 🖼️ imagen_*.webp           # Imágenes generadas
+│   ├── 🎬 video_*.mp4             # Videos generados
+│   └── ...                        # Otros archivos multimedia
+├── 📁 assets/                     # Recursos estáticos
+│   └── 🖼️ logo.jpg               # Logo de la aplicación
+├── 📁 tests/                      # Tests unitarios
+├── 💾 ai_models_backup_*.zip      # Backups automáticos
+├── 📚 README.md                   # Esta documentación
+├── 📚 INICIO_RAPIDO.md            # Guía de inicio rápido
+├── 📚 HISTORIAL_SPEC.md           # Especificación técnica
+├── 📚 CORRECCIONES_COSTOS.md      # Información de costos
+└── 📚 ACCESO_ARCHIVOS_LOCALES.md  # Sistema de archivos
 ```
-
-## 🛠️ Scripts Independientes
-
-### **Generación de Imágenes**
-```bash
-python generate_imagen.py
-```
-
-### **Generación de Videos Seedance**
-```bash
-python video.py
-```
-
-### **Generación de Videos Anime**
-```bash
-python anime.py
-```
-
-## 🔧 Tecnologías Utilizadas
-
-- **Frontend**: Streamlit
-- **Backend**: Python 3.10+
-- **IA**: Replicate API
-- **Almacenamiento**: JSON + Sistema de archivos
-- **Estilo**: CSS personalizado
-- **Control de versiones**: Git
-
-## 📦 Dependencias Principales
-
-```
-streamlit>=1.47.0
-replicate>=0.15.0
-requests>=2.31.0
-pathlib>=1.0.1
-```
-
-## 🎨 Características de Diseño
-
-- **Logo personalizado** en sidebar (170px, bordes redondeados)
-- **Tipografía manuscrita** para el nombre del autor
-- **Interfaz responsiva** con layout amplio
-- **Iconos temáticos** para cada función
-- **Colores diferenciados** por tipo de contenido
-- **Sidebar persistente** con todos los controles
-
-## 🔒 Seguridad
-
-- **Tokens externos** no incluidos en el repositorio
-- **Archivo `.gitignore`** configurado correctamente
-- **Validación de configuración** antes de usar la API
-- **Historial local** sin exposición de datos sensibles
-
-## 📈 Métricas de Rendimiento
-
-- **Tiempo de generación**: Variable según modelo y parámetros
-- **Almacenamiento**: Optimizado con límite de 100 elementos en historial
-- **Interfaz**: Respuesta inmediata en controles
-- **Descarga**: Automática con verificación de archivos existentes
-
-## 🚀 Nuevo: VEO 3 Fast de Google
-
-### **Características Especiales**
-- **Modelo de Google**: Tecnología de vanguardia en generación de video
-- **Calidad cinematográfica**: Videos de alta calidad con realismo excepcional
-- **Mejora automática de prompts**: La IA optimiza automáticamente tus descripciones
-- **Duración flexible**: Videos de 2 a 8 segundos
-- **Múltiples relaciones de aspecto**: 16:9, 9:16, 1:1
-
-### **Parámetros Avanzados**
-- **Calidad**: Standard y High
-- **Movimiento de cámara**: Estático, paneo, zoom, dolly
-- **Intensidad de movimiento**: Control granular de 0.1 a 1.0
-- **Enhance prompt**: Mejora automática del texto de entrada
-
-### **Plantillas Predefinidas**
-- 🏃 **Acción Épica**: Superhéroes y escenas dinámicas
-- 🌊 **Naturaleza Cinematográfica**: Paisajes y elementos naturales
-- 🚗 **Persecución Urbana**: Escenas de acción en ciudad
-- 🦋 **Transformación Mágica**: Procesos naturales en cámara lenta
-- 🎭 **Drama Emocional**: Momentos íntimos y expresivos
-
-## 🤝 Contribuciones
-
-Este proyecto está en desarrollo activo. Las mejoras y sugerencias son bienvenidas.
-
-## � Documentación Completa
-
-### 📖 **Archivos de Documentación Disponibles**
-
-| Archivo | Descripción | Contenido Principal |
-|---------|-------------|-------------------|
-| **[📋 README.md](./README.md)** | **Documentación principal** | Instalación, uso, características completas |
-| **[🚀 INICIO_RAPIDO.md](./INICIO_RAPIDO.md)** | **Guía de inicio rápido** | Scripts automáticos, solución de problemas |
-| **[📊 HISTORIAL_SPEC.md](./HISTORIAL_SPEC.md)** | **Especificación técnica** | Sistema de historial, estructura de datos |
-| **[💰 CORRECCIONES_COSTOS.md](./CORRECCIONES_COSTOS.md)** | **Cálculos de costos** | Tarifas reales de Replicate, estimaciones |
-| **[📁 ACCESO_ARCHIVOS_LOCALES.md](./ACCESO_ARCHIVOS_LOCALES.md)** | **Sistema de archivos** | Enlaces duales, almacenamiento local |
-
-### 🗂️ **Navegación por Temas**
-
-#### **🚀 Para Empezar**
-- [Instalación automática](./INICIO_RAPIDO.md#instalación-automática)
-- [Primera configuración](./INICIO_RAPIDO.md#primera-ejecución)
-- [Solución de problemas](./INICIO_RAPIDO.md#solución-de-problemas)
-
-#### **💰 Gestión de Costos**
-- [Tarifas reales de Replicate](./CORRECCIONES_COSTOS.md#tarifas-extraídas-de-la-factura)
-- [Estimaciones por modelo](./CORRECCIONES_COSTOS.md#estimaciones-para-nuestro-historial)
-- [Sistema de cálculo automático](#sistema-de-estadísticas)
-
-#### **📊 Sistema Técnico**
-- [Estructura del historial](./HISTORIAL_SPEC.md#estructura-de-datos)
-- [Campos obligatorios](./HISTORIAL_SPEC.md#campos-obligatorios)
-- [Reglas de funcionamiento](./HISTORIAL_SPEC.md#reglas-de-funcionamiento)
-
-#### **💾 Archivos y Almacenamiento**
-- [Sistema dual online/local](./ACCESO_ARCHIVOS_LOCALES.md)
-- [Gestión de archivos](#gestión-de-archivos-y-sistema-dual)
-- [Estructura de carpetas](#estructura-del-proyecto)
-
-### ⚡ **Accesos Rápidos**
-
-```bash
-# 🚀 Ejecutar aplicación (más rápido)
-.\run_app.ps1
-
-# 📊 Ver historial de generaciones
-# → Pestaña "Historial" en la app
-
-# 💰 Revisar costos estimados  
-# → Sección "Estadísticas" en cada elemento
-
-# 🔧 Solucionar problemas
-# → Ver INICIO_RAPIDO.md#solución-de-problemas
-```
-
-### 🆕 **Últimas Actualizaciones (2025)**
-
-- ✅ **Sistema de iconos mejorado** - Iconos cinema para videos, art para imágenes
-- ✅ **Cálculos de costos unificados** - Consistencia entre historial y biblioteca  
-- ✅ **Detección de modelos robusta** - Múltiples métodos de identificación
-- ✅ **Documentación estructurada** - Archivos .md organizados por tema
-
-## �📄 Licencia
-
-Proyecto desarrollado por **Ayoze Benítez** para uso educativo y profesional en el ámbito odontológico.
-
-## 🌐 Enlaces
-
-- **🏠 GitHub**: [AransDino/flux-pro-dental](https://github.com/AransDino/flux-pro-dental)
-- **🤖 Replicate**: [replicate.com](https://replicate.com)
-- **⚡ Streamlit**: [streamlit.io](https://streamlit.io)
-- **📚 Documentación**: Ver archivos .md del proyecto para guías específicas
 
 ---
 
-**© 2025 Ayoze Benítez - AI Models Pro Generator v2.1**
+## 📝 Historial de Cambios Recientes
 
-*Última actualización: 18 de julio de 2025*
+### **v2.1.0 - Sistema de Backup (2024-07-19)**
+- ✅ **Nueva funcionalidad de backup completo**
+- ✅ **Compresión ZIP con metadatos**
+- ✅ **Restauración desde archivos externos**
+- ✅ **Backup de seguridad automático**
+- ✅ **Gestión completa de backups existentes**
+- ✅ **Validación de integridad de archivos**
 
-### 🔧 **Estado del Proyecto: Completamente Funcional**
+### **v2.0.0 - Restructuración Completa (2024-07-18)**
+- ✅ **Funciones centralizadas en utils.py**
+- ✅ **Modal de configuración con pestañas**
+- ✅ **Sistema dual mejorado (online/local)**
+- ✅ **Estadísticas visuales por modelo**
+- ✅ **Cálculos de costo actualizados**
 
-- ✅ **6 modelos de IA integrados** (Flux Pro, Kandinsky, SSD-1B, Seedance, Pixverse, VEO 3 Fast)
-- ✅ **Sistema de costos real** basado en tarifas de Replicate
-- ✅ **Iconos cinema-themed** para videos y art-themed para imágenes  
-- ✅ **Documentación completa** en 5 archivos .md estructurados
-- ✅ **Sistema dual** online/local completamente implementado
-- ✅ **Scripts automáticos** para instalación sin complicaciones
+---
+
+## 🤝 Contribuir
+
+1. **Fork** el proyecto
+2. **Crea** una branch para tu feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** a la branch (`git push origin feature/AmazingFeature`)
+5. **Abre** un Pull Request
+
+---
+
+## 📧 Contacto
+
+**Ayoze Benítez** - Desarrollador Principal
+
+- 🌐 **GitHub**: [@AransDino](https://github.com/AransDino)
+- 📧 **Email**: [Contacto directo via GitHub Issues](https://github.com/AransDino/flux-pro-dental/issues)
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+---
+
+## ⭐ Agradecimientos
+
+- **[Replicate](https://replicate.com)** - Por proporcionar la API de modelos de IA
+- **[Streamlit](https://streamlit.io)** - Por el framework de aplicaciones web
+- **[Black Forest Labs](https://huggingface.co/black-forest-labs)** - Por el modelo Flux Pro
+- **Comunidad Open Source** - Por las librerías y herramientas utilizadas
+
+---
+
+<div align="center">
+
+**⭐ Si este proyecto te es útil, considera darle una estrella ⭐**
+
+**🔧 Hecho con ❤️ por Ayoze Benítez**
+
+</div>
