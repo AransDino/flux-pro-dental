@@ -1108,6 +1108,8 @@ if st.session_state.current_page == 'generator':
                             
                             with st.spinner("🏷️ Generando sticker..."):
                                 try:
+                                    # Marcar tiempo específico para generación de sticker
+                                    sticker_start_time = time.time()
                                     # generate_sticker ahora usa replicate.run() y devuelve output directo
                                     output = generate_sticker(prompt, **params)
                                     
@@ -1145,8 +1147,8 @@ if st.session_state.current_page == 'generator':
                                             sticker_url = None
                                             local_path = None
                                         
-                                        # Calcular tiempo de procesamiento
-                                        processing_time = time.time() - start_time
+                                        # Calcular tiempo de procesamiento específico del sticker
+                                        processing_time = time.time() - sticker_start_time
                                         
                                         # Guardar en historial solo si tenemos URL válida
                                         if sticker_url:
