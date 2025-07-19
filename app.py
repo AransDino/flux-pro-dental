@@ -17,8 +17,469 @@ from utils import (
     load_history, save_to_history, calculate_item_cost, 
     load_replicate_token, download_and_save_file, get_logo_base64,
     HISTORY_DIR, HISTORY_FILE, COST_RATES, BACKUPS_DIR,
-    create_backup, restore_backup, list_available_backups, delete_backup
+    create_backup, restore_backup, list_available_backups, delete_backup,
+    get_comprehensive_stats, get_cost_breakdown_by_period, 
+    get_model_efficiency_ranking, get_spending_alerts
 )
+
+# =============================================================================
+# DEFINICIÓN DE MODALES (deben estar antes de ser utilizados)
+# =============================================================================
+
+# Modal de configuración usando st.dialog (moderno)
+@st.dialog("⚙️ Configuración de la Aplicación", width="large")
+def show_config_modal():
+    """Modal moderno de configuración con opciones de control de la aplicación"""
+    
+    # Tabs para organizar la configuración
+    tab1, tab2 = st.tabs(["🎛️ Control de Aplicación", "💾 Backup y Restauración"])
+    
+    with tab1:
+        # Centrar todo el contenido del modal
+        col_left, col_center, col_right = st.columns([1, 3, 1])
+        
+        with col_center:
+            # Header mejorado con estilo
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                color: white;
+                margin-bottom: 20px;
+                width: 100%;
+            ">
+                <h3 style="margin: 0; font-weight: bold;">🎛️ Opciones de Control</h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestiona el estado y comportamiento de la aplicación</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botones de acción centrados
+            col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Botón Reiniciar con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #4ECDC4, #44A08D);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🔄</div>
+                <div style="color: white; font-weight: bold;">REINICIAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🔄 Reiniciar", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_reiniciar_btn",
+                         help="Recarga la aplicación manteniendo la sesión"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_restart_modal = True
+                st.rerun()
+        
+        with col2:
+            # Botón Detener con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">❌</div>
+                <div style="color: white; font-weight: bold;">DETENER</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("❌ Detener", 
+                         use_container_width=True, 
+                         type="secondary",
+                         key="modal_detener_btn",
+                         help="Detiene la ejecución de Streamlit"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_stop_modal = True
+                st.rerun()
+        
+        with col3:
+            # Botón Cerrar Servidor con estilo mejorado
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #dc3545, #c82333);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+                animation: pulse 2s infinite;
+            ">
+                <div style="color: white; font-size: 24px; margin-bottom: 5px;">🚨</div>
+                <div style="color: white; font-weight: bold;">CERRAR</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🚨 Cerrar Servidor", 
+                         use_container_width=True, 
+                         type="primary",
+                         key="modal_cerrar_servidor_btn",
+                         help="Cierra completamente el servidor"):
+                st.session_state.show_config_modal = False
+                st.session_state.show_shutdown_modal = True
+                st.rerun()
+        
+        # Separador con estilo
+        st.markdown("""
+        <div style="
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            margin: 20px 0;
+            border-radius: 1px;
+        "></div>
+        """, unsafe_allow_html=True)
+        
+        # Información adicional con mejor diseño
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        ">
+            <h4 style="margin-top: 0; color: #2c3e50;">💡 Información de Controles</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #4ECDC4; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🔄</span>
+                    <span><strong>Reiniciar:</strong> Recarga la página actual sin cerrar el servidor</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #FF6B6B; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">❌</span>
+                    <span><strong>Detener:</strong> Para la ejecución pero mantiene el servidor activo</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold;">🚨</span>
+                    <span><strong>Cerrar Servidor:</strong> Termina completamente la aplicación</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with tab2:
+        # Header de backup
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        ">
+            <h3 style="margin: 0; font-weight: bold;">💾 Gestión de Backups</h3>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Respalda y restaura tus datos de la aplicación</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Sección de crear backup
+        st.subheader("📦 Crear Nuevo Backup")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.markdown("""
+            **El backup incluirá:**
+            - 📊 Estadísticas de generación (`generation_stats.json`)
+            - 📋 Historial de contenido (`history.json`)
+            - 🖼️ Imágenes y videos generados
+            - 📄 Metadatos del backup
+            """)
+        
+        with col2:
+            if st.button("💾 Crear Backup", 
+                         type="primary", 
+                         use_container_width=True,
+                         key="create_backup_btn"):
+                with st.spinner("Creando backup..."):
+                    success, message, backup_path = create_backup()
+                    if success:
+                        st.success(f"✅ {message}")
+                        if backup_path:
+                            st.info(f"📁 Guardado en: `{backup_path}`")
+                    else:
+                        st.error(f"❌ {message}")
+        
+        st.divider()
+        
+        # Sección de backups disponibles
+        st.subheader("📂 Backups Disponibles")
+        
+        backups = list_available_backups()
+        
+        if backups:
+            for i, backup in enumerate(backups):
+                with st.expander(f"📦 {backup['filename']} ({backup['size_mb']} MB)", expanded=False):
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    
+                    with col1:
+                        st.write(f"**📅 Creado:** {backup['created']}")
+                        st.write(f"**📊 Tamaño:** {backup['size_mb']} MB")
+                        
+                        if backup['metadata']:
+                            metadata = backup['metadata']
+                            files_info = metadata.get('files_included', {})
+                            st.write(f"**📁 Archivos incluidos:**")
+                            st.write(f"- Stats: {'✅' if files_info.get('generation_stats') else '❌'}")
+                            st.write(f"- Historial: {'✅' if files_info.get('history_json') else '❌'}")
+                            st.write(f"- Media: {files_info.get('media_files', 0)} archivos")
+                    
+                    with col2:
+                        if st.button("🔄 Restaurar", 
+                                   key=f"restore_{i}",
+                                   type="secondary",
+                                   use_container_width=True,
+                                   help="Restaurar este backup"):
+                            with st.spinner("Restaurando backup..."):
+                                success, message = restore_backup(backup['full_path'])
+                                if success:
+                                    st.success(f"✅ {message}")
+                                    st.balloons()
+                                    st.info("🔄 Reinicia la aplicación para ver los cambios")
+                                else:
+                                    st.error(f"❌ {message}")
+                    
+                    with col3:
+                        # Usar una clave única para este backup específico
+                        backup_id = backup['filename'].replace('.zip', '').replace('ai_models_backup_', '')
+                        confirm_key = f"confirm_delete_{backup_id}"
+                        
+                        # Container para mantener el estado de la UI
+                        delete_container = st.container()
+                        
+                        with delete_container:
+                            if st.session_state.get(confirm_key, False):
+                                # Mostrar confirmación con advertencia visual
+                                st.warning("⚠️ ¿Eliminar definitivamente?")
+                                
+                                col3_1, col3_2 = st.columns(2)
+                                with col3_1:
+                                    if st.button("✅ Confirmar", 
+                                               key=f"yes_{backup_id}",
+                                               type="primary",
+                                               use_container_width=True):
+                                        success, message = delete_backup(backup['filename'])
+                                        if success:
+                                            st.success(f"✅ Eliminado!")
+                                            st.balloons()
+                                            # Limpiar el estado y refrescar
+                                            if confirm_key in st.session_state:
+                                                del st.session_state[confirm_key]
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"❌ {message}")
+                                            if confirm_key in st.session_state:
+                                                del st.session_state[confirm_key]
+                                
+                                with col3_2:
+                                    if st.button("❌ Cancelar", 
+                                               key=f"no_{backup_id}",
+                                               type="secondary",
+                                               use_container_width=True):
+                                        if confirm_key in st.session_state:
+                                            del st.session_state[confirm_key]
+                                        st.rerun()
+                            else:
+                                # Mostrar botón de eliminar normal
+                                if st.button("🗑️ Eliminar", 
+                                           key=f"delete_{backup_id}",
+                                           type="secondary",
+                                           use_container_width=True,
+                                           help="Eliminar este backup permanentemente"):
+                                    # Activar modo confirmación sin cerrar el modal
+                                    st.session_state[confirm_key] = True
+                                    st.rerun()
+        else:
+            st.info("📭 No hay backups disponibles. Crea tu primer backup usando el botón de arriba.")
+        
+        st.divider()
+        
+        # Sección de restaurar desde archivo
+        st.subheader("📁 Restaurar desde Archivo")
+        
+        uploaded_file = st.file_uploader(
+            "Selecciona un archivo de backup (.zip)",
+            type=['zip'],
+            help="Sube un archivo de backup previamente creado"
+        )
+        
+        if uploaded_file is not None:
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.write(f"**Archivo seleccionado:** {uploaded_file.name}")
+                st.write(f"**Tamaño:** {uploaded_file.size / (1024*1024):.2f} MB")
+            
+            with col2:
+                if st.button("🔄 Restaurar Archivo", 
+                           type="primary",
+                           use_container_width=True):
+                    # Guardar archivo temporal
+                    temp_path = Path(f"temp_{uploaded_file.name}")
+                    try:
+                        with open(temp_path, "wb") as f:
+                            f.write(uploaded_file.getvalue())
+                        
+                        with st.spinner("Restaurando desde archivo..."):
+                            success, message = restore_backup(str(temp_path))
+                            
+                        # Limpiar archivo temporal
+                        temp_path.unlink()
+                        
+                        if success:
+                            st.success(f"✅ {message}")
+                            st.balloons()
+                            st.info("🔄 Reinicia la aplicación para ver los cambios")
+                        else:
+                            st.error(f"❌ {message}")
+                            
+                    except Exception as e:
+                        if temp_path.exists():
+                            temp_path.unlink()
+                        st.error(f"❌ Error al procesar archivo: {str(e)}")
+        
+        # Información de seguridad
+        st.info("""
+        ⚠️ **Importante:** 
+        - Se crea automáticamente un backup de seguridad antes de restaurar
+        - Los backups incluyen todos tus datos importantes
+        - Reinicia la aplicación después de restaurar para ver los cambios
+        """)
+    
+    # Botón de cerrar modal al final
+    st.divider()
+    if st.button("❌ Cerrar Configuración", type="primary", use_container_width=True, key="close_config_modal"):
+        st.session_state.show_config_modal = False
+        st.rerun()
+
+# Modal de reinicio centrado
+@st.dialog("🔄 Reiniciando Aplicación")
+def show_restart_modal():
+    """Modal centrado para mostrar el proceso de reinicio"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">🔄</div>
+        <h2 style="margin: 0; font-weight: bold;">REINICIANDO APLICACIÓN</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">La página se recargará automáticamente...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Pequeña pausa y luego recargar
+    time.sleep(1)
+    st.rerun()
+
+# Modal de detener centrado
+@st.dialog("❌ Deteniendo Aplicación")
+def show_stop_modal():
+    """Modal centrado para mostrar el proceso de detención"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">❌</div>
+        <h2 style="margin: 0; font-weight: bold;">DETENIENDO APLICACIÓN</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Parando la ejecución actual...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Información del proceso
+    st.info("🔄 **Proceso de detención iniciado**")
+    st.markdown("La aplicación se detendrá pero el servidor permanecerá activo.")
+    
+    # Pequeña pausa y luego detener
+    time.sleep(1)
+    st.stop()
+
+# Modal de cerrar servidor centrado
+@st.dialog("🚨 Cerrando Servidor")
+def show_shutdown_modal():
+    """Modal centrado para mostrar el proceso de cierre del servidor"""
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    ">
+        <div style="font-size: 48px; margin-bottom: 15px;">🚨</div>
+        <h2 style="margin: 0; font-weight: bold;">CERRANDO SERVIDOR</h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Terminando completamente la aplicación...</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Proceso de cierre con feedback visual centrado
+    st.error("🚨 **PROCESO DE CIERRE INICIADO**")
+    st.markdown("---")
+    
+    # Información de cierre en tiempo real
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    # Simular proceso de cierre con progreso
+    status_text.text("🔄 Iniciando cierre del servidor...")
+    progress_bar.progress(25)
+    time.sleep(0.5)
+    
+    status_text.text("💾 Guardando estado de la aplicación...")
+    progress_bar.progress(50)
+    time.sleep(0.5)
+    
+    status_text.text("🌐 Cerrando conexiones de red...")
+    progress_bar.progress(75)
+    time.sleep(0.5)
+    
+    status_text.text("⚡ Terminando procesos...")
+    progress_bar.progress(100)
+    time.sleep(0.5)
+    
+    # Mensaje final
+    st.success("✅ **SERVIDOR CERRADO EXITOSAMENTE**")
+    st.info("🌐 **Cierra manualmente esta ventana del navegador**")
+    
+    # Forzar cierre inmediato del servidor
+    # Terminar todos los procesos de streamlit
+    try:
+        if os.name == 'nt':  # Windows
+            subprocess.run(['taskkill', '/F', '/IM', 'streamlit.exe'], 
+                         capture_output=True, check=False)
+        else:  # Linux/Mac
+            subprocess.run(['pkill', '-f', 'streamlit'], 
+                         capture_output=True, check=False)
+    except:
+        pass
+    
+    # Salida inmediata
+    os._exit(0)
+
+# =============================================================================
+# FIN DE DEFINICIÓN DE MODALES
+# =============================================================================
 
 # Configurar la página
 st.set_page_config(
@@ -166,6 +627,9 @@ if 'current_page' not in st.session_state:
 if 'selected_item_index' not in st.session_state:
     st.session_state.selected_item_index = None
 
+if 'show_config_modal' not in st.session_state:
+    st.session_state.show_config_modal = False
+
 # Header con título y botón de biblioteca
 header_col1, header_col2 = st.columns([4, 1])
 
@@ -195,10 +659,14 @@ with header_col2:
     if st.session_state.current_page == 'generator':
         if st.button("📚 Biblioteca", type="secondary", use_container_width=True):
             st.session_state.current_page = 'biblioteca'
+            # Resetear el modal al cambiar de página
+            st.session_state.show_config_modal = False
             st.rerun()
     else:
         if st.button("🚀 Generador", type="secondary", use_container_width=True):
             st.session_state.current_page = 'generator'
+            # Resetear el modal al cambiar de página
+            st.session_state.show_config_modal = False
             st.rerun()
 
 # Verificar configuración
@@ -441,7 +909,7 @@ with st.sidebar:
 if st.session_state.current_page == 'generator':
     # PÁGINA DEL GENERADOR (contenido original)
     # Pestañas principales para el generador
-    tab1, tab2 = st.tabs(["🚀 Generar", "📂 Historial"])
+    tab1, tab2, tab3 = st.tabs(["🚀 Generar", "📂 Historial", "📊 Dashboard"])
 
     with tab1:
         # Área principal de generación
@@ -1186,6 +1654,7 @@ if st.session_state.current_page == 'generator':
             # Botón de configuración elegante
             if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación"):
                 st.session_state.show_config_modal = True
+                st.rerun()
 
     # Sección de historial avanzado
     with tab2:
@@ -1579,8 +2048,427 @@ if st.session_state.current_page == 'generator':
         else:
             st.info("📝 No hay elementos en el historial aún. ¡Genera tu primer contenido!")
 
+    # Sección del Dashboard de Control
+    with tab3:
+        st.header("📊 Dashboard de Control de Gastos")
+        
+        # Obtener estadísticas completas
+        stats = get_comprehensive_stats()
+        
+        # Alertas de gasto
+        alerts = get_spending_alerts()
+        if alerts:
+            st.subheader("🚨 Alertas")
+            for alert in alerts:
+                if alert['type'] == 'warning':
+                    st.warning(f"{alert['icon']} **{alert['title']}**: {alert['message']}")
+                else:
+                    st.info(f"{alert['icon']} **{alert['title']}**: {alert['message']}")
+            st.divider()
+        
+        # Métricas principales en tarjetas
+        st.subheader("💰 Resumen Financiero")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+            ">
+                <div style="font-size: 14px; margin-bottom: 5px;">📊 TOTAL</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">{stats['total_generations']}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Generaciones</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 4px 15px rgba(240,147,251,0.3);
+            ">
+                <div style="font-size: 14px; margin-bottom: 5px;">💵 USD</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${stats['total_cost_usd']:.2f}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Costo Total</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 4px 15px rgba(78,205,196,0.3);
+            ">
+                <div style="font-size: 14px; margin-bottom: 5px;">💶 EUR</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">€{stats['total_cost_eur']:.2f}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Equivalente</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            avg_cost = stats['total_cost_usd'] / stats['total_generations'] if stats['total_generations'] > 0 else 0
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+            ">
+                <div style="font-size: 14px; margin-bottom: 5px;">📈 PROMEDIO</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${avg_cost:.3f}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Por Generación</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.divider()
+        
+        # Pestañas del dashboard
+        dash_tab1, dash_tab2, dash_tab3, dash_tab4 = st.tabs([
+            "📊 Por Tipo", "🤖 Por Modelo", "📅 Temporal", "🎯 Eficiencia"
+        ])
+        
+        with dash_tab1:
+            st.subheader("📊 Análisis por Tipo de Contenido")
+            
+            # Gráfico de distribución por tipo
+            type_col1, type_col2 = st.columns([2, 1])
+            
+            with type_col1:
+                # Crear datos para el gráfico
+                chart_data = []
+                colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+                icons = ['🖼️', '🎬', '📝']
+                
+                for i, (tipo, data) in enumerate(stats['stats_by_type'].items()):
+                    if data['count'] > 0:
+                        chart_data.append({
+                            'Tipo': f"{icons[i]} {tipo.title()}",
+                            'Cantidad': data['count'],
+                            'Costo': data['total_cost'],
+                            'Promedio': data['total_cost'] / data['count'] if data['count'] > 0 else 0
+                        })
+                
+                if chart_data:
+                    import pandas as pd
+                    df = pd.DataFrame(chart_data)
+                    
+                    # Gráfico de barras
+                    st.bar_chart(df.set_index('Tipo')['Cantidad'])
+                    
+                    # Tabla de detalles
+                    st.markdown("**📋 Detalles por Tipo:**")
+                    for item in chart_data:
+                        st.markdown(f"""
+                        - **{item['Tipo']}**: {item['Cantidad']} generaciones, ${item['Costo']:.2f} total, ${item['Promedio']:.3f} promedio
+                        """)
+            
+            with type_col2:
+                st.markdown("**🎯 Distribución de Costos**")
+                
+                # Mostrar porcentajes
+                total_cost = stats['total_cost_usd']
+                for tipo, data in stats['stats_by_type'].items():
+                    if data['count'] > 0:
+                        percentage = (data['total_cost'] / total_cost * 100) if total_cost > 0 else 0
+                        icon = '🖼️' if tipo == 'imagen' else '🎬' if tipo == 'video' else '📝'
+                        
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            padding: 15px;
+                            border-radius: 10px;
+                            margin: 10px 0;
+                            border-left: 4px solid #007bff;
+                        ">
+                            <h5 style="margin: 0; color: #2c3e50;">{icon} {tipo.title()}</h5>
+                            <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #28a745;">{percentage:.1f}%</p>
+                            <small style="color: #6c757d;">${data['total_cost']:.2f} de ${total_cost:.2f}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+        
+        with dash_tab2:
+            st.subheader("🤖 Análisis por Modelo")
+            
+            # Ranking de modelos
+            ranking = get_model_efficiency_ranking()
+            
+            model_col1, model_col2 = st.columns([3, 1])
+            
+            with model_col1:
+                st.markdown("**📊 Estadísticas Detalladas por Modelo**")
+                
+                for i, model in enumerate(ranking[:10]):  # Top 10 modelos
+                    # Determinar color basado en eficiencia
+                    if model['efficiency_score'] > 75:
+                        color = '#28a745'  # Verde
+                    elif model['efficiency_score'] > 50:
+                        color = '#ffc107'  # Amarillo
+                    else:
+                        color = '#dc3545'  # Rojo
+                    
+                    # Icono basado en tipo
+                    if model['type'] == 'imagen':
+                        icon = '🖼️'
+                    elif model['type'] == 'video':
+                        icon = '🎬'
+                    else:
+                        icon = '📝'
+                    
+                    st.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin: 8px 0;
+                        border-left: 4px solid {color};
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h6 style="margin: 0; color: #2c3e50;">{icon} {model['name']}</h6>
+                                <small style="color: #6c757d;">
+                                    {model['total_uses']} usos • ${model['avg_cost']:.3f} promedio • {model['success_rate']:.1f}% éxito
+                                </small>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 18px; font-weight: bold; color: {color};">
+                                    {model['efficiency_score']:.1f}
+                                </div>
+                                <small style="color: #6c757d;">Score</small>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <small style="color: #495057;">
+                                <strong>Costo Total:</strong> ${model['total_cost']:.2f}
+                            </small>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with model_col2:
+                st.markdown("**🏆 Top 3 Modelos**")
+                
+                # Top 3 más eficientes
+                for i, model in enumerate(ranking[:3]):
+                    medal = ['🥇', '🥈', '🥉'][i]
+                    st.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                        padding: 12px;
+                        border-radius: 8px;
+                        margin: 5px 0;
+                        color: white;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 20px;">{medal}</div>
+                        <div style="font-weight: bold; font-size: 12px;">{model['name'][:15]}{'...' if len(model['name']) > 15 else ''}</div>
+                        <div style="font-size: 14px;">{model['efficiency_score']:.1f} pts</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("**📉 Menos Eficientes**")
+                for model in ranking[-3:]:
+                    if model['total_uses'] > 0:
+                        st.markdown(f"""
+                        <div style="
+                            background: #f8d7da;
+                            padding: 8px;
+                            border-radius: 5px;
+                            margin: 3px 0;
+                            color: #721c24;
+                            font-size: 12px;
+                        ">
+                            <strong>{model['name'][:15]}{'...' if len(model['name']) > 15 else ''}</strong><br>
+                            {model['efficiency_score']:.1f} pts • {model['success_rate']:.1f}%
+                        </div>
+                        """, unsafe_allow_html=True)
+        
+        with dash_tab3:
+            st.subheader("📅 Análisis Temporal")
+            
+            # Selector de período
+            period_col1, period_col2 = st.columns([1, 3])
+            
+            with period_col1:
+                period = st.selectbox(
+                    "Período:",
+                    ["month", "week", "day"],
+                    format_func=lambda x: {"month": "Por Mes", "week": "Por Semana", "day": "Por Día"}[x]
+                )
+            
+            # Obtener datos temporales
+            temporal_data = get_cost_breakdown_by_period(period)
+            
+            with period_col2:
+                if temporal_data:
+                    st.markdown(f"**📊 Datos de los últimos períodos ({period}):**")
+                    
+                    # Mostrar los últimos 5 períodos
+                    for i, (periodo, data) in enumerate(list(temporal_data.items())[:5]):
+                        col_a, col_b, col_c, col_d = st.columns(4)
+                        
+                        with col_a:
+                            st.metric("📅 Período", periodo)
+                        with col_b:
+                            st.metric("💰 Costo", f"${data['total_cost']:.2f}")
+                        with col_c:
+                            st.metric("📊 Generaciones", data['count'])
+                        with col_d:
+                            avg = data['total_cost'] / data['count'] if data['count'] > 0 else 0
+                            st.metric("📈 Promedio", f"${avg:.3f}")
+                        
+                        if i < 4:  # No mostrar divider después del último
+                            st.divider()
+                else:
+                    st.info("No hay datos temporales disponibles")
+        
+        with dash_tab4:
+            st.subheader("🎯 Análisis de Eficiencia")
+            
+            efficiency_col1, efficiency_col2 = st.columns([2, 1])
+            
+            with efficiency_col1:
+                st.markdown("**🎯 Recomendaciones de Optimización**")
+                
+                # Generar recomendaciones
+                recommendations = []
+                
+                # Análisis de modelos costosos
+                expensive_models = [m for m in ranking if m['avg_cost'] > 0.05 and m['total_uses'] > 3]
+                if expensive_models:
+                    recommendations.append({
+                        'type': 'cost',
+                        'title': 'Modelos Costosos Detectados',
+                        'message': f"Los modelos {', '.join([m['name'] for m in expensive_models[:3]])} tienen costos elevados. Considera alternativas más económicas.",
+                        'icon': '💰'
+                    })
+                
+                # Análisis de modelos con baja tasa de éxito
+                low_success = [m for m in ranking if m['success_rate'] < 80 and m['total_uses'] > 5]
+                if low_success:
+                    recommendations.append({
+                        'type': 'performance',
+                        'title': 'Modelos con Baja Tasa de Éxito',
+                        'message': f"Los modelos {', '.join([m['name'] for m in low_success[:2]])} tienen tasas de éxito bajas. Revisa los parámetros.",
+                        'icon': '⚠️'
+                    })
+                
+                # Análisis de distribución de tipos
+                type_costs = [(k, v['total_cost']) for k, v in stats['stats_by_type'].items() if v['count'] > 0]
+                if type_costs:
+                    most_expensive_type = max(type_costs, key=lambda x: x[1])
+                    if most_expensive_type[1] > stats['total_cost_usd'] * 0.6:
+                        recommendations.append({
+                            'type': 'distribution',
+                            'title': 'Concentración de Gastos',
+                            'message': f"El {most_expensive_type[0]} representa la mayoría de tus gastos (${most_expensive_type[1]:.2f}). Considera diversificar.",
+                            'icon': '📊'
+                        })
+                
+                # Mostrar recomendaciones
+                if recommendations:
+                    for rec in recommendations:
+                        if rec['type'] == 'cost':
+                            st.warning(f"{rec['icon']} **{rec['title']}**: {rec['message']}")
+                        elif rec['type'] == 'performance':
+                            st.error(f"{rec['icon']} **{rec['title']}**: {rec['message']}")
+                        else:
+                            st.info(f"{rec['icon']} **{rec['title']}**: {rec['message']}")
+                else:
+                    st.success("🎉 **¡Excelente!** Tu uso de los modelos es eficiente y optimizado.")
+                
+                # Proyección de gastos
+                st.markdown("**📈 Proyección de Gastos**")
+                monthly_data = get_cost_breakdown_by_period('month')
+                if monthly_data:
+                    current_month = list(monthly_data.values())[0]
+                    current_cost = current_month['total_cost']
+                    current_count = current_month['count']
+                    
+                    # Estimar gasto mensual basado en tendencia
+                    days_passed = datetime.now().day
+                    estimated_monthly = (current_cost / days_passed) * 30 if days_passed > 0 else current_cost
+                    
+                    col_proj1, col_proj2, col_proj3 = st.columns(3)
+                    with col_proj1:
+                        st.metric("📅 Mes Actual", f"${current_cost:.2f}")
+                    with col_proj2:
+                        st.metric("📊 Proyección Mensual", f"${estimated_monthly:.2f}")
+                    with col_proj3:
+                        yearly_projection = estimated_monthly * 12
+                        st.metric("📈 Proyección Anual", f"${yearly_projection:.2f}")
+            
+            with efficiency_col2:
+                st.markdown("**💡 Tips de Optimización**")
+                
+                tips = [
+                    "🔍 Usa modelos específicos para cada tarea",
+                    "⚡ Los modelos SSD-1B son más rápidos y económicos para imágenes simples",
+                    "🎬 Para videos, Seedance es más eficiente que Pixverse",
+                    "📏 Ajusta la resolución según tu necesidad real",
+                    "🔄 Reutiliza prompts exitosos para reducir iteraciones",
+                    "📊 Revisa regularmente las estadísticas de eficiencia",
+                    "💾 Mantén backups para evitar regenerar contenido perdido"
+                ]
+                
+                for tip in tips:
+                    st.markdown(f"""
+                    <div style="
+                        background: #e7f3ff;
+                        padding: 8px;
+                        border-radius: 5px;
+                        margin: 5px 0;
+                        border-left: 3px solid #007bff;
+                        font-size: 12px;
+                    ">
+                        {tip}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    # Verificar si se debe mostrar el modal de configuración (solo en la página del generador)
+    if st.session_state.get('show_config_modal', False):
+        show_config_modal()
+
 elif st.session_state.current_page == 'biblioteca':
     # PÁGINA DE LA BIBLIOTECA
+    
+    # Sidebar con controles para la biblioteca
+    with st.sidebar:
+        st.header("📚 Biblioteca")
+        st.divider()
+        
+        # Botón de configuración en la biblioteca
+        if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación"):
+            st.session_state.show_config_modal = True
+            st.rerun()
+        
+        st.divider()
+        
+        # Enlaces útiles para la biblioteca
+        st.subheader("🔗 Enlaces")
+        st.markdown("[📊 Dashboard](javascript:void(0))", help="Ir al Dashboard de Control")
+        st.markdown("[🎨 Generador](javascript:void(0))", help="Ir al Generador")
+        
+        # Información rápida
+        st.subheader("📊 Info Rápida")
+        st.info("💡 Tip: Haz clic en 'Ver detalles' de cualquier item para más información")
+    
     # Cargar historial para la biblioteca
     history = load_history()
     
@@ -1944,8 +2832,22 @@ elif st.session_state.current_page == 'biblioteca':
             st.session_state.current_page = 'generator'
             st.rerun()
 
+    # Verificar si se debe mostrar el modal de configuración (en la biblioteca)
+    if st.session_state.get('show_config_modal', False):
+        show_config_modal()
 
-# Modal de configuración usando st.dialog (moderno)
+# Verificar qué modal mostrar
+if st.session_state.get('show_restart_modal', False):
+    show_restart_modal()
+    st.session_state.show_restart_modal = False
+
+if st.session_state.get('show_stop_modal', False):
+    show_stop_modal()
+    st.session_state.show_stop_modal = False
+
+if st.session_state.get('show_shutdown_modal', False):
+    show_shutdown_modal()
+    st.session_state.show_shutdown_modal = False
 @st.dialog("⚙️ Configuración de la Aplicación", width="large")
 def show_config_modal():
     """Modal moderno de configuración con opciones de control de la aplicación"""
@@ -2286,11 +3188,7 @@ def show_config_modal():
     # El diálogo se cierra automáticamente al hacer clic fuera o con ESC
 
 
-# Verificar si se debe mostrar el modal
-if st.session_state.get('show_config_modal', False):
-    show_config_modal()
-    # NO resetear el estado aquí para permitir que el modal persista
-    # st.session_state.show_config_modal = False
+# El modal se manejará dentro de cada página específica
 
 # Modal de reinicio centrado
 @st.dialog("🔄 Reiniciando Aplicación")

@@ -9,7 +9,7 @@ import base64
 import requests
 import tempfile
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 import streamlit as st
 
@@ -663,6 +663,268 @@ def get_file_info(file_path: Path) -> Dict[str, Any]:
         }
     except Exception:
         return {'exists': False}
+
+
+# ===============================
+# DASHBOARD DE ESTADÍSTICAS Y COSTOS
+# ===============================
+
+def get_comprehensive_stats():
+    """
+    Obtener estadísticas completas del sistema
+    
+    Returns:
+        Dict: Estadísticas completas organizadas
+    """
+    history = load_history()
+    generation_stats = {}
+    
+    # Cargar estadísticas de generación si existen
+    if os.path.exists("generation_stats.json"):
+        with open("generation_stats.json", "r", encoding="utf-8") as f:
+            generation_stats = json.load(f)
+    
+    # Estadísticas por tipo de contenido
+    stats_by_type = {
+        'imagen': {'count': 0, 'total_cost': 0, 'models': {}},
+        'video': {'count': 0, 'total_cost': 0, 'models': {}},
+        'texto': {'count': 0, 'total_cost': 0, 'models': {}},  # Para futuros modelos de texto
+    }
+    
+    # Estadísticas por modelo
+    stats_by_model = {}
+    
+    # Estadísticas temporales (por mes)
+    stats_by_month = {}
+    
+    # Procesar historial
+    total_cost = 0
+    for item in history:
+        item_cost, model_info, _ = calculate_item_cost(item)
+        item_type = item.get('tipo', 'unknown')
+        modelo = item.get('modelo', 'unknown')
+        fecha = item.get('fecha', '')
+        
+        # Normalizar tipo
+        if item_type in ['imagen']:
+            normalized_type = 'imagen'
+        elif item_type in ['video', 'video_seedance']:
+            normalized_type = 'video'
+        else:
+            normalized_type = 'texto'  # Para futuros modelos
+        
+        # Estadísticas por tipo
+        if normalized_type in stats_by_type:
+            stats_by_type[normalized_type]['count'] += 1
+            stats_by_type[normalized_type]['total_cost'] += item_cost
+            
+            # Estadísticas por modelo dentro del tipo
+            if modelo not in stats_by_type[normalized_type]['models']:
+                stats_by_type[normalized_type]['models'][modelo] = {
+                    'count': 0, 'cost': 0, 'avg_cost': 0
+                }
+            stats_by_type[normalized_type]['models'][modelo]['count'] += 1
+            stats_by_type[normalized_type]['models'][modelo]['cost'] += item_cost
+        
+        # Estadísticas por modelo
+        if modelo not in stats_by_model:
+            stats_by_model[modelo] = {
+                'count': 0, 'total_cost': 0, 'type': normalized_type,
+                'avg_cost': 0, 'success_rate': 0
+            }
+        stats_by_model[modelo]['count'] += 1
+        stats_by_model[modelo]['total_cost'] += item_cost
+        
+        # Estadísticas por mes
+        if fecha:
+            try:
+                month_key = fecha[:7]  # YYYY-MM
+                if month_key not in stats_by_month:
+                    stats_by_month[month_key] = {
+                        'count': 0, 'cost': 0, 'types': {'imagen': 0, 'video': 0, 'texto': 0}
+                    }
+                stats_by_month[month_key]['count'] += 1
+                stats_by_month[month_key]['cost'] += item_cost
+                stats_by_month[month_key]['types'][normalized_type] += 1
+            except:
+                pass
+        
+        total_cost += item_cost
+    
+    # Calcular promedios y completar datos
+    for tipo in stats_by_type:
+        for modelo in stats_by_type[tipo]['models']:
+            model_data = stats_by_type[tipo]['models'][modelo]
+            if model_data['count'] > 0:
+                model_data['avg_cost'] = model_data['cost'] / model_data['count']
+    
+    for modelo in stats_by_model:
+        model_data = stats_by_model[modelo]
+        if model_data['count'] > 0:
+            model_data['avg_cost'] = model_data['total_cost'] / model_data['count']
+        
+        # Tasa de éxito desde generation_stats.json
+        if modelo in generation_stats:
+            gen_data = generation_stats[modelo]
+            if gen_data.get('total', 0) > 0:
+                model_data['success_rate'] = (gen_data.get('exitosas', 0) / gen_data['total']) * 100
+    
+    return {
+        'total_generations': len(history),
+        'total_cost_usd': total_cost,
+        'total_cost_eur': total_cost * 0.92,
+        'stats_by_type': stats_by_type,
+        'stats_by_model': stats_by_model,
+        'stats_by_month': dict(sorted(stats_by_month.items(), reverse=True)),
+        'generation_performance': generation_stats
+    }
+
+
+def get_cost_breakdown_by_period(period='month'):
+    """
+    Obtener desglose de costos por período
+    
+    Args:
+        period: 'day', 'week', 'month'
+        
+    Returns:
+        Dict: Costos organizados por período
+    """
+    history = load_history()
+    breakdown = {}
+    
+    for item in history:
+        fecha = item.get('fecha', '')
+        if not fecha:
+            continue
+            
+        try:
+            fecha_obj = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
+            
+            if period == 'day':
+                key = fecha_obj.strftime('%Y-%m-%d')
+            elif period == 'week':
+                # Obtener el lunes de esa semana
+                monday = fecha_obj - timedelta(days=fecha_obj.weekday())
+                key = monday.strftime('%Y-W%W')
+            else:  # month
+                key = fecha_obj.strftime('%Y-%m')
+            
+            if key not in breakdown:
+                breakdown[key] = {
+                    'total_cost': 0,
+                    'count': 0,
+                    'types': {'imagen': {'count': 0, 'cost': 0}, 
+                             'video': {'count': 0, 'cost': 0}, 
+                             'texto': {'count': 0, 'cost': 0}}
+                }
+            
+            item_cost, _, _ = calculate_item_cost(item)
+            item_type = item.get('tipo', 'unknown')
+            
+            # Normalizar tipo
+            if item_type in ['imagen']:
+                normalized_type = 'imagen'
+            elif item_type in ['video', 'video_seedance']:
+                normalized_type = 'video'
+            else:
+                normalized_type = 'texto'
+            
+            breakdown[key]['total_cost'] += item_cost
+            breakdown[key]['count'] += 1
+            breakdown[key]['types'][normalized_type]['count'] += 1
+            breakdown[key]['types'][normalized_type]['cost'] += item_cost
+            
+        except Exception:
+            continue
+    
+    # Ordenar por fecha (más reciente primero)
+    return dict(sorted(breakdown.items(), reverse=True))
+
+
+def get_model_efficiency_ranking():
+    """
+    Obtener ranking de eficiencia de modelos
+    
+    Returns:
+        List: Modelos ordenados por eficiencia
+    """
+    stats = get_comprehensive_stats()
+    models = []
+    
+    for model_name, model_data in stats['stats_by_model'].items():
+        efficiency_score = 0
+        
+        # Factores para el score de eficiencia
+        success_rate = model_data.get('success_rate', 0)
+        avg_cost = model_data.get('avg_cost', 0)
+        total_uses = model_data.get('count', 0)
+        
+        # Calcular score: mayor éxito, menor costo, más uso = mejor score
+        if avg_cost > 0:
+            cost_factor = 1 / avg_cost  # Inverso del costo
+            usage_factor = min(total_uses / 10, 1)  # Normalizar uso (máximo factor 1)
+            success_factor = success_rate / 100
+            
+            efficiency_score = (success_factor * 0.4 + cost_factor * 0.4 + usage_factor * 0.2) * 100
+        
+        models.append({
+            'name': model_name,
+            'type': model_data.get('type', 'unknown'),
+            'efficiency_score': efficiency_score,
+            'success_rate': success_rate,
+            'avg_cost': avg_cost,
+            'total_uses': total_uses,
+            'total_cost': model_data.get('total_cost', 0)
+        })
+    
+    # Ordenar por score de eficiencia
+    return sorted(models, key=lambda x: x['efficiency_score'], reverse=True)
+
+
+def get_spending_alerts():
+    """
+    Obtener alertas de gasto
+    
+    Returns:
+        List: Lista de alertas
+    """
+    stats = get_comprehensive_stats()
+    alerts = []
+    
+    # Alerta por gasto total alto
+    if stats['total_cost_usd'] > 50:
+        alerts.append({
+            'type': 'warning',
+            'title': 'Gasto Total Elevado',
+            'message': f"El gasto total acumulado es ${stats['total_cost_usd']:.2f} USD",
+            'icon': '💰'
+        })
+    
+    # Alerta por gasto mensual alto
+    monthly_costs = get_cost_breakdown_by_period('month')
+    if monthly_costs:
+        current_month_cost = list(monthly_costs.values())[0]['total_cost']
+        if current_month_cost > 20:
+            alerts.append({
+                'type': 'warning',
+                'title': 'Gasto Mensual Alto',
+                'message': f"El gasto del mes actual es ${current_month_cost:.2f} USD",
+                'icon': '📅'
+            })
+    
+    # Alerta por modelos ineficientes
+    ranking = get_model_efficiency_ranking()
+    for model in ranking[-3:]:  # Los 3 menos eficientes
+        if model['total_uses'] > 5 and model['success_rate'] < 70:
+            alerts.append({
+                'type': 'info',
+                'title': 'Modelo Poco Eficiente',
+                'message': f"{model['name']}: {model['success_rate']:.1f}% éxito, ${model['avg_cost']:.3f} promedio",
+                'icon': '⚠️'
+            })
+    
+    return alerts
 
 
 # ===============================
