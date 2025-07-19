@@ -1194,19 +1194,17 @@ with header_col1:
         st.markdown("### Biblioteca de contenido generado")
 
 with header_col2:
-    st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+    # Crear botones de navegación en columnas
+    nav_col1, nav_col2 = st.columns(2)
     
-    if st.session_state.current_page == 'generator':
-        if st.button("📚 Biblioteca", type="secondary", use_container_width=True):
+    with nav_col1:
+        if st.button('📚 Biblioteca', key='goto_biblioteca', use_container_width=True):
             st.session_state.current_page = 'biblioteca'
-            # Resetear el modal al cambiar de página
-            st.session_state.show_config_modal = False
             st.rerun()
-    else:
-        if st.button("🚀 Generador", type="secondary", use_container_width=True):
-            st.session_state.current_page = 'generator'
-            # Resetear el modal al cambiar de página
-            st.session_state.show_config_modal = False
+
+    with nav_col2:
+        if st.button('🎨 Galería', key='goto_gallery', use_container_width=True):
+            st.session_state.current_page = 'gallery'
             st.rerun()
 
 # Verificar configuración
@@ -3352,6 +3350,282 @@ elif st.session_state.current_page == 'biblioteca':
     # Verificar si se debe mostrar el modal de configuración (en la biblioteca)
     if st.session_state.get('show_config_modal', False):
         show_config_modal()
+
+elif st.session_state.current_page == 'gallery':
+    # CSS para efectos hover
+    st.markdown("""
+    <style>
+    .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .hover-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%);
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+    }
+
+    .gallery-item:hover .hover-overlay {
+        opacity: 1;
+    }
+
+    .hover-btn {
+        background: rgba(255,255,255,0.9);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 25px;
+        color: #333;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .hover-btn:hover {
+        background: white;
+        transform: scale(1.05);
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Header de la galería
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    ">
+        <h1 style="margin: 0; font-size: 2.5em;">🎨 Galería Visual</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1em;">Explora tus creaciones con estilo</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Usar funciones existentes (NO MODIFICAR las funciones, solo usarlas)
+    history = load_history()  # ✅ Función existente
+
+    if history:
+        # Filtrar solo imágenes automáticamente
+        images = [item for item in history if item.get('tipo') == 'imagen' and item.get('url')]
+
+        if images:
+            # Estadísticas visuales
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #FF6B6B, #FF8E8E); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                    <h2 style="margin: 0; font-size: 2.5em;">🖼️</h2>
+                    <h3 style="margin: 5px 0;">{len(images)}</h3>
+                    <p style="margin: 0; opacity: 0.9;">Imágenes</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col2:
+                unique_models = len(set(item.get('modelo', 'Unknown') for item in images))
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #4ECDC4, #44A08D); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                    <h2 style="margin: 0; font-size: 2.5em;">🤖</h2>
+                    <h3 style="margin: 5px 0;">{unique_models}</h3>
+                    <p style="margin: 0; opacity: 0.9;">Modelos</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col3:
+                favorites = len([item for item in images if item.get('favorite', False)])
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #FFD93D, #FF6B6B); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                    <h2 style="margin: 0; font-size: 2.5em;">⭐</h2>
+                    <h3 style="margin: 5px 0;">{favorites}</h3>
+                    <p style="margin: 0; opacity: 0.9;">Favoritas</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col4:
+                # Calcular costo total usando función existente
+                total_cost = sum(calculate_item_cost(item)[0] for item in images)  # ✅ Función existente
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                    <h2 style="margin: 0; font-size: 2.5em;">💰</h2>
+                    <h3 style="margin: 5px 0;">${total_cost:.2f}</h3>
+                    <p style="margin: 0; opacity: 0.9;">Costo Total</p>
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Controles de filtrado con estilo
+            filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+            with filter_col1:
+                models_list = ['Todos'] + sorted(list(set(item.get('modelo', 'Unknown') for item in images)))
+                filter_model = st.selectbox(
+                    '🎯 Filtrar por modelo:',
+                    models_list,
+                    key='gallery_model_filter'
+                )
+
+            with filter_col2:
+                sort_by = st.selectbox(
+                    '📊 Ordenar por:',
+                    ['Más reciente', 'Más antiguo', 'Favoritas primero'],
+                    key='gallery_sort_filter'
+                )
+
+            with filter_col3:
+                show_count = st.selectbox(
+                    '📦 Mostrar:',
+                    [12, 24, 48, 'Todas'],
+                    index=1,
+                    key='gallery_count_filter'
+                )
+
+            # Aplicar filtros
+            filtered_images = images.copy()
+
+            if filter_model != 'Todos':
+                filtered_images = [img for img in filtered_images if img.get('modelo', 'Unknown') == filter_model]
+
+            # Aplicar ordenamiento
+            if sort_by == 'Más reciente':
+                filtered_images.sort(key=lambda x: x.get('fecha', ''), reverse=True)
+            elif sort_by == 'Más antiguo':
+                filtered_images.sort(key=lambda x: x.get('fecha', ''))
+            elif sort_by == 'Favoritas primero':
+                filtered_images.sort(key=lambda x: (not x.get('favorite', False), x.get('fecha', '')), reverse=True)
+
+            # Limitar cantidad
+            if show_count != 'Todas':
+                filtered_images = filtered_images[:show_count]
+            if filtered_images:
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Grid responsive de imágenes
+                cols_per_row = 4
+
+                for i in range(0, len(filtered_images), cols_per_row):
+                    cols = st.columns(cols_per_row)
+
+                    for j in range(cols_per_row):
+                        if i + j < len(filtered_images):
+                            item = filtered_images[i + j]
+
+                            with cols[j]:
+                                # Container con hover effect
+                                unique_id = f"gallery_{i}_{j}"
+
+                                # Crear HTML con hover overlay
+                                image_html = f"""
+                                <div class="gallery-item" style="position: relative;">
+                                    <img src="{item['url']}"
+                                         style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px;"
+                                         alt="Imagen generada con {item.get('modelo', 'Unknown')}">
+
+                                    <div class="hover-overlay">
+                                        <a href="{item['url']}" target="_blank" class="hover-btn">
+                                            👁️ Ver Grande
+                                        </a>
+                                        <a href="{item['url']}" download class="hover-btn">
+                                            ⬇️ Descargar
+                                        </a>
+                                    </div>
+                                </div>
+                                """
+
+                                st.markdown(image_html, unsafe_allow_html=True)
+
+                                # Información debajo de la imagen
+                                st.markdown(f"""
+                                <div style="padding: 10px 5px; text-align: center;">
+                                    <strong style="color: #2c3e50;">🤖 {item.get('modelo', 'Unknown')}</strong><br>
+                                    <small style="color: #6c757d;">📅 {item.get('fecha', 'Sin fecha')[:10]}</small>
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                                # Botón adicional para modal (opcional)
+                                if st.button(f"ℹ️ Info", key=f"info_{unique_id}", use_container_width=True):
+                                    st.session_state[f'show_modal_{unique_id}'] = True
+
+                                # Modal de información (opcional)
+                                if st.session_state.get(f'show_modal_{unique_id}', False):
+                                    with st.popover("📋 Información de la Imagen", use_container_width=True):
+                                        st.image(item['url'], use_column_width=True)
+                                        st.write(f"**🤖 Modelo:** {item.get('modelo', 'Unknown')}")
+                                        st.write(f"**📅 Fecha:** {item.get('fecha', 'Sin fecha')}")
+
+                                        # Mostrar prompt si existe
+                                        prompt = item.get('prompt', '')
+                                        if prompt:
+                                            st.write(f"**💬 Prompt:** {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
+
+                                        # Mostrar costo
+                                        cost_usd, _, _ = calculate_item_cost(item)  # ✅ Función existente
+                                        st.write(f"**💰 Costo:** ${cost_usd:.3f} USD")
+
+                                        if st.button("✕ Cerrar", key=f"close_modal_{unique_id}"):
+                                            st.session_state[f'show_modal_{unique_id}'] = False
+                                            st.rerun()
+
+                # Información final
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.info(f'📊 Mostrando {len(filtered_images)} de {len(images)} imágenes')
+
+            else:
+                st.warning('🔍 No hay imágenes que coincidan con los filtros seleccionados.')
+
+        else:
+            # No hay imágenes
+            st.markdown("""
+            <div style="text-align: center; padding: 50px;">
+                <h2>🎨 Tu galería está vacía</h2>
+                <p>¡Genera tu primera imagen para comenzar!</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button('🚀 Ir al Generador', type='primary', use_container_width=True):
+                st.session_state.current_page = 'generator'
+                st.rerun()
+
+    else:
+        # No hay historial
+        st.markdown("""
+        <div style="text-align: center; padding: 50px;">
+            <h2>📱 Comienza tu viaje creativo</h2>
+            <p>Genera tu primera imagen para ver tu galería cobrar vida</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button('✨ Crear primera imagen', type='primary', use_container_width=True):
+            st.session_state.current_page = 'generator'
+            st.rerun()
 
 # Verificar qué modal mostrar
 if st.session_state.get('show_restart_modal', False):
