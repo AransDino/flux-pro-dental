@@ -477,6 +477,367 @@ def show_shutdown_modal():
     # Salida inmediata
     os._exit(0)
 
+# Modal de configuración del modelo centrado
+@st.dialog("🔧 Ajustes del Modelo", width="large")
+def show_model_settings_modal():
+    """Modal para configurar parámetros específicos del modelo seleccionado"""
+    
+    # Obtener el modelo actual desde el estado
+    content_type = st.session_state.get('content_type', '🖼️ Imagen: Flux Pro')
+    
+    st.markdown(f"""
+    <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        margin-bottom: 20px;
+    ">
+        <h3 style="margin: 0; font-weight: bold;">🔧 Configuración del Modelo</h3>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">{content_type}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Configuración específica según el modelo
+    if "Flux Pro" in content_type:
+        st.subheader("⚙️ Parámetros de Flux Pro")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            steps = st.slider(
+                "🔢 Pasos de inferencia:",
+                min_value=1, max_value=50, 
+                value=st.session_state.model_configs['flux_pro']['steps'],
+                help="Más pasos = mayor calidad pero más tiempo"
+            )
+            
+            width = st.selectbox(
+                "📐 Ancho:",
+                [512, 768, 1024, 1152, 1216],
+                index=[512, 768, 1024, 1152, 1216].index(st.session_state.model_configs['flux_pro']['width'])
+            )
+            
+            height = st.selectbox(
+                "📏 Alto:",
+                [512, 768, 1024, 1152, 1216],
+                index=[512, 768, 1024, 1152, 1216].index(st.session_state.model_configs['flux_pro']['height'])
+            )
+            
+            aspect_ratio = st.selectbox(
+                "📱 Proporción:",
+                ["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21"],
+                index=["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21"].index(st.session_state.model_configs['flux_pro']['aspect_ratio'])
+            )
+        
+        with col2:
+            guidance = st.slider(
+                "🎯 Guía (CFG):",
+                min_value=1.0, max_value=20.0, 
+                value=st.session_state.model_configs['flux_pro']['guidance'],
+                step=0.1,
+                help="Qué tan estrictamente sigue el prompt"
+            )
+            
+            output_format = st.selectbox(
+                "📷 Formato:",
+                ["webp", "jpg", "png"],
+                index=["webp", "jpg", "png"].index(st.session_state.model_configs['flux_pro']['output_format'])
+            )
+            
+            output_quality = st.slider(
+                "✨ Calidad:",
+                min_value=1, max_value=100,
+                value=st.session_state.model_configs['flux_pro']['output_quality']
+            )
+            
+            safety_tolerance = st.slider(
+                "🛡️ Tolerancia de seguridad:",
+                min_value=1, max_value=5,
+                value=st.session_state.model_configs['flux_pro']['safety_tolerance']
+            )
+        
+        prompt_upsampling = st.checkbox(
+            "🚀 Mejora automática del prompt",
+            value=st.session_state.model_configs['flux_pro']['prompt_upsampling']
+        )
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['flux_pro'].update({
+                'steps': steps,
+                'width': width,
+                'height': height,
+                'guidance': guidance,
+                'output_format': output_format,
+                'output_quality': output_quality,
+                'aspect_ratio': aspect_ratio,
+                'safety_tolerance': safety_tolerance,
+                'prompt_upsampling': prompt_upsampling
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    elif "Kandinsky" in content_type:
+        st.subheader("🎨 Parámetros de Kandinsky 2.2")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            num_inference_steps = st.slider(
+                "🔢 Pasos de inferencia:",
+                min_value=1, max_value=150,
+                value=st.session_state.model_configs['kandinsky']['num_inference_steps']
+            )
+            
+            width = st.selectbox(
+                "📐 Ancho:",
+                [512, 768, 1024],
+                index=[512, 768, 1024].index(st.session_state.model_configs['kandinsky']['width'])
+            )
+            
+            height = st.selectbox(
+                "📏 Alto:",
+                [512, 768, 1024],
+                index=[512, 768, 1024].index(st.session_state.model_configs['kandinsky']['height'])
+            )
+        
+        with col2:
+            guidance_scale = st.slider(
+                "🎯 Escala de guía:",
+                min_value=1.0, max_value=20.0,
+                value=st.session_state.model_configs['kandinsky']['guidance_scale'],
+                step=0.1
+            )
+            
+            scheduler = st.selectbox(
+                "⚙️ Planificador:",
+                ["p_sampler", "ddim_sampler", "plms_sampler"],
+                index=["p_sampler", "ddim_sampler", "plms_sampler"].index(st.session_state.model_configs['kandinsky']['scheduler'])
+            )
+            
+            prior_cf_scale = st.slider(
+                "🔮 Escala CF previa:",
+                min_value=1.0, max_value=20.0,
+                value=st.session_state.model_configs['kandinsky']['prior_cf_scale'],
+                step=0.1
+            )
+        
+        prior_steps = st.selectbox(
+            "👁️ Pasos previos:",
+            ["5", "10", "25", "50"],
+            index=["5", "10", "25", "50"].index(st.session_state.model_configs['kandinsky']['prior_steps'])
+        )
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['kandinsky'].update({
+                'num_inference_steps': num_inference_steps,
+                'width': width,
+                'height': height,
+                'guidance_scale': guidance_scale,
+                'scheduler': scheduler,
+                'prior_cf_scale': prior_cf_scale,
+                'prior_steps': prior_steps
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    elif "SSD-1B" in content_type:
+        st.subheader("⚡ Parámetros de SSD-1B Lightning")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            width = st.selectbox(
+                "📐 Ancho:",
+                [512, 768, 1024],
+                index=[512, 768, 1024].index(st.session_state.model_configs['ssd1b']['width'])
+            )
+            
+            height = st.selectbox(
+                "📏 Alto:",
+                [512, 768, 1024],
+                index=[512, 768, 1024].index(st.session_state.model_configs['ssd1b']['height'])
+            )
+            
+            num_inference_steps = st.slider(
+                "🔢 Pasos de inferencia:",
+                min_value=1, max_value=10,
+                value=st.session_state.model_configs['ssd1b']['num_inference_steps']
+            )
+        
+        with col2:
+            guidance_scale = st.slider(
+                "🎯 Escala de guía:",
+                min_value=0.0, max_value=10.0,
+                value=st.session_state.model_configs['ssd1b']['guidance_scale'],
+                step=0.1
+            )
+            
+            output_format = st.selectbox(
+                "📷 Formato:",
+                ["webp", "jpg", "png"],
+                index=["webp", "jpg", "png"].index(st.session_state.model_configs['ssd1b']['output_format'])
+            )
+            
+            output_quality = st.slider(
+                "✨ Calidad:",
+                min_value=1, max_value=100,
+                value=st.session_state.model_configs['ssd1b']['output_quality']
+            )
+        
+        disable_safety_checker = st.checkbox(
+            "🚫 Desactivar verificador de seguridad",
+            value=st.session_state.model_configs['ssd1b']['disable_safety_checker']
+        )
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['ssd1b'].update({
+                'width': width,
+                'height': height,
+                'guidance_scale': guidance_scale,
+                'num_inference_steps': num_inference_steps,
+                'output_format': output_format,
+                'output_quality': output_quality,
+                'disable_safety_checker': disable_safety_checker
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    elif "Seedance" in content_type:
+        st.subheader("🎬 Parámetros de Seedance Video")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            width = st.selectbox(
+                "📐 Ancho:",
+                [576, 768, 1024],
+                index=[576, 768, 1024].index(st.session_state.model_configs['seedance']['width'])
+            )
+            
+            height = st.selectbox(
+                "📏 Alto:",
+                [320, 576, 768],
+                index=[320, 576, 768].index(st.session_state.model_configs['seedance']['height'])
+            )
+            
+            num_frames = st.slider(
+                "🎞️ Número de frames:",
+                min_value=14, max_value=25,
+                value=st.session_state.model_configs['seedance']['num_frames']
+            )
+            
+            fps = st.slider(
+                "📹 FPS:",
+                min_value=5, max_value=10,
+                value=st.session_state.model_configs['seedance']['fps']
+            )
+        
+        with col2:
+            num_inference_steps = st.slider(
+                "🔢 Pasos de inferencia:",
+                min_value=1, max_value=50,
+                value=st.session_state.model_configs['seedance']['num_inference_steps']
+            )
+            
+            motion_bucket_id = st.slider(
+                "🌊 ID de movimiento:",
+                min_value=1, max_value=255,
+                value=st.session_state.model_configs['seedance']['motion_bucket_id']
+            )
+            
+            cond_aug = st.slider(
+                "🔧 Aumento condicional:",
+                min_value=0.0, max_value=0.3,
+                value=st.session_state.model_configs['seedance']['cond_aug'],
+                step=0.01
+            )
+            
+            decoding_t = st.slider(
+                "📊 Pasos de decodificación:",
+                min_value=1, max_value=50,
+                value=st.session_state.model_configs['seedance']['decoding_t']
+            )
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['seedance'].update({
+                'width': width,
+                'height': height,
+                'num_frames': num_frames,
+                'num_inference_steps': num_inference_steps,
+                'fps': fps,
+                'motion_bucket_id': motion_bucket_id,
+                'cond_aug': cond_aug,
+                'decoding_t': decoding_t
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    elif "Pixverse" in content_type:
+        st.subheader("🎭 Parámetros de Pixverse (Anime)")
+        
+        aspect_ratio = st.selectbox(
+            "📱 Proporción:",
+            ["16:9", "9:16", "1:1"],
+            index=["16:9", "9:16", "1:1"].index(st.session_state.model_configs['pixverse']['aspect_ratio'])
+        )
+        
+        st.info("ℹ️ Pixverse tiene configuración limitada. Se enfoca en la calidad del prompt para anime.")
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['pixverse'].update({
+                'aspect_ratio': aspect_ratio
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    elif "VEO 3 Fast" in content_type:
+        st.subheader("🚀 Parámetros de VEO 3 Fast")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            aspect_ratio = st.selectbox(
+                "📱 Proporción:",
+                ["16:9", "9:16", "1:1"],
+                index=["16:9", "9:16", "1:1"].index(st.session_state.model_configs['veo3']['aspect_ratio'])
+            )
+        
+        with col2:
+            prompt_upsampling = st.checkbox(
+                "🚀 Mejora automática del prompt",
+                value=st.session_state.model_configs['veo3']['prompt_upsampling']
+            )
+        
+        st.info("ℹ️ VEO 3 Fast está optimizado para videos de alta calidad con configuración mínima.")
+        
+        # Guardar configuración
+        if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+            st.session_state.model_configs['veo3'].update({
+                'aspect_ratio': aspect_ratio,
+                'prompt_upsampling': prompt_upsampling
+            })
+            st.success("✅ Configuración guardada!")
+            st.session_state.show_model_settings_modal = False
+            st.rerun()
+    
+    # Botón de cerrar
+    st.divider()
+    if st.button("❌ Cerrar", type="secondary", use_container_width=True):
+        st.session_state.show_model_settings_modal = False
+        st.rerun()
+
 # =============================================================================
 # FIN DE DEFINICIÓN DE MODALES
 # =============================================================================
@@ -488,6 +849,113 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# =============================================================================
+# ESTILOS CSS GLOBALES PARA BOTONES
+# =============================================================================
+st.markdown("""
+<style>
+/* Botón GENERAR y acciones principales - Rojo energético */
+div[data-testid="stButton"] button[kind="primary"]:not([key*="close"]):not([key*="cerrar"]):not([key*="ajustes"]):not([key*="avanzad"]):not([key="config_main_panel"]):not([key="close_config_modal"]) {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4) !important;
+    transition: all 0.3s ease !important;
+    width: 100% !important;
+}
+div[data-testid="stButton"] button[kind="primary"]:not([key*="close"]):not([key*="cerrar"]):not([key*="ajustes"]):not([key*="avanzad"]):not([key="config_main_panel"]):not([key="close_config_modal"]):hover {
+    background: linear-gradient(135deg, #c82333, #a02129) !important;
+    box-shadow: 0 6px 12px rgba(220, 53, 69, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Botones de navegación - Verde para configuración general */
+div[data-testid="stButton"] button[kind="secondary"]:not([key*="close"]):not([key*="cerrar"]):not([key*="ajustes"]):not([key*="avanzad"]):not([key="config_main_panel"]):not([key="close_config_modal"]) {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 16px !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+    transition: all 0.3s ease !important;
+    width: 100% !important;
+}
+div[data-testid="stButton"] button[kind="secondary"]:not([key*="close"]):not([key*="cerrar"]):not([key*="ajustes"]):not([key*="avanzad"]):not([key="config_main_panel"]):not([key="close_config_modal"]):hover {
+    background: linear-gradient(135deg, #218838, #1cc88a) !important;
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Botones Amarillos - Cerrar, Cancelar, Ajustes Avanzados */
+div[data-testid="stButton"] button[key*="close"],
+div[data-testid="stButton"] button[key*="cerrar"], 
+div[data-testid="stButton"] button[key*="ajustes"],
+div[data-testid="stButton"] button[key*="avanzad"],
+div[data-testid="stButton"] button[key*="model_settings"],
+div[data-testid="stButton"] button[key="config_main_panel"],
+div[data-testid="stButton"] button[key="close_config_modal"],
+div[data-testid="stButton"] button:has-text("❌"),
+div[data-testid="stButton"] button:has-text("Cerrar"),
+div[data-testid="stButton"] button:has-text("Ajustes"),
+div[data-testid="stButton"] button:has-text("Avanzados") {
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+    color: #212529 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 16px !important;
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4) !important;
+    transition: all 0.3s ease !important;
+    width: 100% !important;
+}
+
+/* Forzar específicamente el botón de ajustes avanzados a amarillo */
+div[data-testid="stButton"] button[key="config_main_panel"] {
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+    color: #212529 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 16px !important;
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4) !important;
+    transition: all 0.3s ease !important;
+    width: 100% !important;
+}
+
+div[data-testid="stButton"] button[key*="close"]:hover,
+div[data-testid="stButton"] button[key*="cerrar"]:hover,
+div[data-testid="stButton"] button[key*="ajustes"]:hover,
+div[data-testid="stButton"] button[key*="avanzad"]:hover,
+div[data-testid="stButton"] button[key*="model_settings"]:hover,
+div[data-testid="stButton"] button[key="config_main_panel"]:hover,
+div[data-testid="stButton"] button[key="close_config_modal"]:hover,
+div[data-testid="stButton"] button:has-text("❌"):hover,
+div[data-testid="stButton"] button:has-text("Cerrar"):hover,
+div[data-testid="stButton"] button:has-text("Ajustes"):hover,
+div[data-testid="stButton"] button:has-text("Avanzados"):hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00) !important;
+    box-shadow: 0 6px 12px rgba(255, 193, 7, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Estilos específicos por contenido de texto */
+button:contains("❌ Cerrar"),
+button:contains("🔧 Ajustes"),
+button:contains("Ajustes Avanzados") {
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+    color: #212529 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Funciones eliminadas - ahora importadas de utils.py:
 # - load_history()
@@ -630,6 +1098,74 @@ if 'selected_item_index' not in st.session_state:
 if 'show_config_modal' not in st.session_state:
     st.session_state.show_config_modal = False
 
+if 'show_model_settings_modal' not in st.session_state:
+    st.session_state.show_model_settings_modal = False
+
+# Prevenir que el modal se abra automáticamente al cambiar de modelo
+if 'prevent_auto_modal' not in st.session_state:
+    st.session_state.prevent_auto_modal = False
+
+if 'show_model_modal' not in st.session_state:
+    st.session_state.show_model_modal = False
+
+if 'content_type' not in st.session_state:
+    st.session_state.content_type = '🖼️ Imagen: Flux Pro'
+
+# Inicializar configuraciones por defecto para cada modelo
+if 'model_configs' not in st.session_state:
+    st.session_state.model_configs = {
+        'flux_pro': {
+            'steps': 25,
+            'width': 1024,
+            'height': 1024,
+            'guidance': 3.5,
+            'output_format': 'webp',
+            'output_quality': 80,
+            'aspect_ratio': '1:1',
+            'safety_tolerance': 2,
+            'prompt_upsampling': False
+        },
+        'kandinsky': {
+            'num_inference_steps': 75,
+            'width': 1024,
+            'height': 1024,
+            'guidance_scale': 4.0,
+            'scheduler': 'p_sampler',
+            'prior_cf_scale': 4.0,
+            'prior_steps': '5'
+        },
+        'ssd1b': {
+            'width': 1024,
+            'height': 1024,
+            'guidance_scale': 2.0,
+            'num_inference_steps': 4,
+            'seed': None,
+            'output_format': 'webp',
+            'output_quality': 80,
+            'disable_safety_checker': False
+        },
+        'seedance': {
+            'width': 1024,
+            'height': 576,
+            'num_frames': 25,
+            'num_inference_steps': 20,
+            'fps': 6,
+            'motion_bucket_id': 180,
+            'cond_aug': 0.02,
+            'decoding_t': 20,
+            'seed': None
+        },
+        'pixverse': {
+            'aspect_ratio': '16:9',
+            'seed': None
+        },
+        'veo3': {
+            'prompt_upsampling': True,
+            'aspect_ratio': '16:9',
+            'seed': None
+        }
+    }
+
 # Header con título y botón de biblioteca
 header_col1, header_col2 = st.columns([4, 1])
 
@@ -702,208 +1238,67 @@ with st.sidebar:
     # Selector de tipo de contenido
     content_type = st.selectbox(
         "🎯 Tipo de contenido:",
-        ["🖼️ Imagen (Flux Pro)", "🎨 Imagen (Kandinsky 2.2)", "⚡ Imagen (SSD-1B)", "🎬 Video (Seedance)", "🎭 Video Anime (Pixverse)", "🚀 Video (VEO 3 Fast)"],
+        ["🖼️ Imagen: Flux Pro", "🎨 Imagen: Kandinsky 2.2", "⚡ Imagen: SSD-1B", "🎬 Video: Seedance", "🎭 Video: Pixverse", "🚀 Video: VEO 3 Fast"],
         help="Selecciona el tipo de contenido que quieres generar"
     )
     
+    # Verificar si el tipo de contenido cambió
+    if st.session_state.content_type != content_type:
+        # Prevenir apertura automática del modal al cambiar modelo
+        st.session_state.prevent_auto_modal = True
+        st.session_state.show_model_settings_modal = False
+    
+    # Actualizar el estado de sesión
+    st.session_state.content_type = content_type
+    
     st.divider()
     
-    # Configuración según el tipo
-    if "Flux Pro" in content_type:
-        st.subheader("📸 Parámetros de Imagen (Flux Pro)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            steps = st.slider("Pasos", min_value=10, max_value=50, value=25, help="Calidad vs velocidad")
-            width = st.selectbox("Ancho", [512, 768, 1024, 1280], index=2)
-        
-        with col2:
-            guidance = st.slider("Guidance", min_value=1, max_value=10, value=3, help="Fuerza del guidance")
-            height = st.selectbox("Alto", [512, 768, 1024, 1280], index=2)
-        
-        aspect_ratio = st.selectbox("Relación de aspecto", ["1:1", "16:9", "9:16", "4:3", "3:4"], index=0)
-        output_format = st.selectbox("Formato", ["webp", "jpg", "png"], index=0)
-        output_quality = st.slider("Calidad", min_value=60, max_value=100, value=80)
-        
-        # Parámetros avanzados
-        with st.expander("🔧 Parámetros avanzados"):
-            interval = st.slider("Intervalo", min_value=1, max_value=5, value=2)
-            safety_tolerance = st.slider("Tolerancia de seguridad", min_value=1, max_value=5, value=2)
-            prompt_upsampling = st.checkbox("Mejora de prompt", value=False)
-        
-        params = {
-            "steps": steps,
-            "width": width,
-            "height": height,
-            "guidance": guidance,
-            "interval": interval,
-            "aspect_ratio": aspect_ratio,
-            "output_format": output_format,
-            "output_quality": output_quality,
-            "safety_tolerance": safety_tolerance,
-            "prompt_upsampling": prompt_upsampling
-        }
+    # Botón para configuración avanzada del modelo
+    st.subheader(f"🔧 {content_type.split(':')[1].strip()}")
     
-    elif "Kandinsky" in content_type:
-        st.subheader("🎨 Parámetros de Imagen (Kandinsky 2.2)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            width = st.selectbox("Ancho", [512, 768, 1024, 1280], index=2)
-            num_inference_steps = st.slider("Pasos de inferencia", min_value=10, max_value=100, value=75, help="Más pasos = mejor calidad")
-        
-        with col2:
-            height = st.selectbox("Alto", [512, 768, 1024, 1280], index=2)
-            num_inference_steps_prior = st.slider("Pasos prior", min_value=10, max_value=50, value=25, help="Pasos del modelo prior")
-        
-        output_format = st.selectbox("Formato de salida", ["webp", "png", "jpg"], index=0)
-        
-        params = {
-            "width": width,
-            "height": height,
-            "num_outputs": 1,
-            "output_format": output_format,
-            "num_inference_steps": num_inference_steps,
-            "num_inference_steps_prior": num_inference_steps_prior
-        }
+    # Mostrar configuración actual resumida
+    model_key = content_type.split(':')[1].strip().lower().replace(' ', '_').replace('-', '').replace('(', '').replace(')', '')
+    if 'flux_pro' in model_key:
+        model_key = 'flux_pro'
+    elif 'kandinsky' in model_key:
+        model_key = 'kandinsky'
+    elif 'ssd' in model_key:
+        model_key = 'ssd1b'
+    elif 'seedance' in model_key:
+        model_key = 'seedance'
+    elif 'pixverse' in model_key:
+        model_key = 'pixverse'
+    elif 'veo' in model_key:
+        model_key = 'veo3'
     
-    elif "Seedance" in content_type:  # Video Seedance
-        st.subheader("🎬 Parámetros de Video (Seedance)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            fps = st.selectbox("FPS", [12, 24, 30], index=1)
-            duration = st.slider("Duración (seg)", min_value=3, max_value=10, value=5)
-        
-        with col2:
-            resolution = st.selectbox("Resolución", ["720p", "1080p", "1440p"], index=1)
-            aspect_ratio = st.selectbox("Relación de aspecto", ["16:9", "9:16", "1:1"], index=0)
-        
-        camera_fixed = st.checkbox("Cámara fija", value=False, help="Si está marcado, la cámara no se mueve")
-        
-        params = {
-            "fps": fps,
-            "duration": duration,
-            "resolution": resolution,
-            "aspect_ratio": aspect_ratio,
-            "camera_fixed": camera_fixed
-        }
+    if model_key in st.session_state.model_configs:
+        config = st.session_state.model_configs[model_key]
     
-    elif "Pixverse" in content_type:  # Video Anime Pixverse
-        st.subheader("🎭 Parámetros de Video Anime (Pixverse)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            style = st.selectbox("Estilo", ["None", "anime", "3d_animation", "clay", "cyberpunk", "comic"], index=1)
-            quality = st.selectbox("Calidad", ["540p", "720p", "1080p"], index=1)
-        
-        with col2:
-            duration = st.slider("Duración (seg)", min_value=3, max_value=10, value=5)
-            aspect_ratio = st.selectbox("Relación de aspecto", ["16:9", "9:16", "1:1"], index=0)
-        
-        effect = st.selectbox("Efecto", ["None", "Zoom In", "Zoom Out", "Pan Left", "Pan Right"], index=0)
-        motion_mode = st.selectbox("Modo de movimiento", ["normal", "slow", "fast"], index=0)
-        sound_effect_switch = st.checkbox("Efectos de sonido", value=False)
-        
-        # Área para prompt negativo
-        negative_prompt = st.text_area(
-            "Prompt negativo (opcional):",
-            height=60,
-            placeholder="Describe lo que NO quieres en el video..."
-        )
-        
-        params = {
-            "style": style,
-            "effect": effect,
-            "quality": quality,
-            "duration": duration,
-            "motion_mode": motion_mode,
-            "aspect_ratio": aspect_ratio,
-            "negative_prompt": negative_prompt,
-            "sound_effect_switch": sound_effect_switch
-        }
-    
-    elif "SSD-1B" in content_type:
-        st.subheader("⚡ Parámetros de Imagen (SSD-1B)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            width = st.selectbox("Ancho", [512, 768, 1024, 1280], index=1)  # Default 768
-            seed = st.number_input("Seed", min_value=0, max_value=999999999999, value=36446545872, help="Semilla para reproducibilidad")
-            scheduler = st.selectbox("Scheduler", ["K_EULER", "DPMSolverMultistep", "HeunDiscrete", "DDIM"], index=0)
-        
-        with col2:
-            height = st.selectbox("Alto", [512, 768, 1024, 1280], index=1)  # Default 768
-            guidance_scale = st.slider("Guidance Scale", min_value=1, max_value=20, value=9, help="Fuerza del guidance")
-            num_inference_steps = st.slider("Pasos de inferencia", min_value=10, max_value=50, value=25, help="Más pasos = mejor calidad")
-        
-        col3, col4 = st.columns(2)
-        with col3:
-            lora_scale = st.slider("LoRA Scale", min_value=0.0, max_value=1.0, value=0.6, step=0.1, help="Intensidad del LoRA")
-            prompt_strength = st.slider("Prompt Strength", min_value=0.0, max_value=1.0, value=0.8, step=0.1, help="Fuerza del prompt")
-        
-        with col4:
-            apply_watermark = st.checkbox("Aplicar marca de agua", value=True)
-            batched_prompt = st.checkbox("Prompt por lotes", value=False)
-        
-        # Prompt negativo
-        negative_prompt = st.text_area("Prompt negativo (opcional):", 
-                                     value="scary, cartoon, painting", 
-                                     height=60,
-                                     help="Elementos que NO quieres en la imagen")
-        
-        params = {
-            "seed": seed,
-            "width": width,
-            "height": height,
-            "scheduler": scheduler,
-            "lora_scale": lora_scale,
-            "num_outputs": 1,
-            "batched_prompt": batched_prompt,
-            "guidance_scale": guidance_scale,
-            "apply_watermark": apply_watermark,
-            "negative_prompt": negative_prompt,
-            "prompt_strength": prompt_strength,
-            "num_inference_steps": num_inference_steps
-        }
-        
-    elif "VEO 3 Fast" in content_type:  # Video VEO 3 Fast
-        st.subheader("🚀 Parámetros de Video (VEO 3 Fast)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            duration = st.slider("Duración (seg)", min_value=2, max_value=8, value=5, help="Duración del video")
-            aspect_ratio = st.selectbox("Relación de aspecto", ["16:9", "9:16", "1:1"], index=0)
-        
-        with col2:
-            enhance_prompt = st.checkbox("Mejorar prompt automáticamente", value=True, help="VEO 3 Fast mejorará automáticamente tu prompt")
-            quality = st.selectbox("Calidad", ["standard", "high"], index=1)
-        
-        # Configuraciones avanzadas
-        with st.expander("🔧 Configuraciones avanzadas"):
-            camera_motion = st.selectbox("Movimiento de cámara", ["static", "pan", "zoom", "dolly"], index=0)
-            motion_intensity = st.slider("Intensidad de movimiento", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
-        
-        params = {
-            "duration": duration,
-            "aspect_ratio": aspect_ratio,
-            "enhance_prompt": enhance_prompt,
-            "quality": quality,
-            "camera_motion": camera_motion,
-            "motion_intensity": motion_intensity
-        }
-    
-    # Botón de configuración al final del sidebar
     st.divider()
     
-    col_config1, col_config2 = st.columns([1, 3])
-    with col_config1:
-        if st.button("⚙️", help="Configuración de la aplicación", key="config_button"):
-            st.session_state.show_config_modal = True
-            st.rerun()
+    # Información adicional en la barra lateral
+    st.header("📊 Información")
     
-    with col_config2:
-        st.markdown("**Control de App**")
+    # Estadísticas de uso
+    if os.path.exists("generation_stats.json"):
+        with open("generation_stats.json", "r", encoding="utf-8") as f:
+            stats = json.load(f)
+        
+        total_generations = sum(model_stats["total"] for model_stats in stats.values())
+        total_successful = sum(model_stats["exitosas"] for model_stats in stats.values())
+        
+        if total_generations > 0:
+            success_rate = (total_successful / total_generations) * 100
+            st.metric("🎯 Tasa de éxito", f"{success_rate:.1f}%")
+            st.metric("📊 Total generado", total_generations)
+    
+    # Botón de configuración con modal
+    st.divider()
+    
+    # Botón de configuración elegante
+    if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación", key="config_sidebar_main"):
+        st.session_state.show_config_modal = True
+        st.rerun()
 
 # Navegación por páginas
 if st.session_state.current_page == 'generator':
@@ -1035,8 +1430,79 @@ if st.session_state.current_page == 'generator':
         - 📏 Caracteres: {len(prompt) if prompt else 0}
         """)
         
+        # Mostrar configuración detallada del modelo actual
+        model_key = content_type.split(':')[1].strip().lower().replace(' ', '_').replace('-', '').replace('(', '').replace(')', '')
+        if 'flux_pro' in model_key:
+            model_key = 'flux_pro'
+        elif 'kandinsky' in model_key:
+            model_key = 'kandinsky'
+        elif 'ssd' in model_key:
+            model_key = 'ssd1b'
+        elif 'seedance' in model_key:
+            model_key = 'seedance'
+        elif 'pixverse' in model_key:
+            model_key = 'pixverse'
+        elif 'veo' in model_key:
+            model_key = 'veo3'
+        
+        if model_key in st.session_state.model_configs:
+            config = st.session_state.model_configs[model_key]
+            
+            # Configuración detallada en el panel principal
+            with st.container():
+                st.markdown("**📋 Parámetros del modelo:**")
+                
+                # Crear layout de parámetros en columnas
+                param_col1, param_col2 = st.columns(2)
+                
+                with param_col1:
+                    if model_key == 'flux_pro':
+                        st.markdown(f"• **Pasos:** {config['steps']}")
+                        st.markdown(f"• **Resolución:** {config['width']}x{config['height']}")
+                    elif model_key == 'kandinsky':
+                        st.markdown(f"• **Pasos:** {config['num_inference_steps']}")
+                        st.markdown(f"• **Resolución:** {config['width']}x{config['height']}")
+                    elif model_key == 'ssd1b':
+                        st.markdown(f"• **Pasos:** {config['num_inference_steps']}")
+                        st.markdown(f"• **Resolución:** {config['width']}x{config['height']}")
+                    elif model_key == 'seedance':
+                        st.markdown(f"• **Resolución:** {config['width']}x{config['height']}")
+                        st.markdown(f"• **Frames:** {config['num_frames']}")
+                    elif model_key == 'pixverse':
+                        st.markdown(f"• **Proporción:** {config['aspect_ratio']}")
+                        st.markdown("• **Estilo:** Anime")
+                    elif model_key == 'veo3':
+                        st.markdown(f"• **Proporción:** {config['aspect_ratio']}")
+                        st.markdown(f"• **Mejora prompt:** {'Sí' if config['prompt_upsampling'] else 'No'}")
+                
+                with param_col2:
+                    if model_key == 'flux_pro':
+                        st.markdown(f"• **Guidance:** {config['guidance']}")
+                        st.markdown(f"• **Formato:** {config['output_format']}")
+                    elif model_key == 'kandinsky':
+                        st.markdown(f"• **Guidance:** {config['guidance_scale']}")
+                        st.markdown(f"• **Scheduler:** {config['scheduler']}")
+                    elif model_key == 'ssd1b':
+                        st.markdown(f"• **Guidance:** {config['guidance_scale']}")
+                        st.markdown(f"• **Formato:** {config['output_format']}")
+                    elif model_key == 'seedance':
+                        st.markdown(f"• **FPS:** {config['fps']}")
+                        st.markdown(f"• **Pasos:** {config['num_inference_steps']}")
+                    elif model_key == 'pixverse':
+                        st.markdown("• **Optimizado:** Anime/3D")
+                        st.markdown("• **Calidad:** Alta")
+                    elif model_key == 'veo3':
+                        st.markdown("• **Optimización:** Velocidad")
+                        st.markdown("• **Calidad:** Professional")
+        
+        if st.button("🔧 Ajustes Avanzados", type="secondary", use_container_width=True, help="Parámetros avanzados del modelo", key="config_main_panel"):
+            # Solo abrir el modal si no está en modo de prevención automática
+            st.session_state.show_model_settings_modal = True
+            st.session_state.prevent_auto_modal = False  # Reset flag
+            st.rerun()
+        
         # Botón de generación
-        if st.button("🚀 **GENERAR**", type="primary", use_container_width=True):
+        if st.button("🚀 **GENERAR**", type="primary", use_container_width=True, key="generate_button"):
             if not prompt.strip():
                 st.error("❌ Por favor ingresa un prompt")
             else:
@@ -1047,6 +1513,7 @@ if st.session_state.current_page == 'generator':
                         
                         if "Flux Pro" in content_type:
                             st.info(f"🖼️ Generando imagen con Flux Pro... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["flux_pro"]
                             prediction = generate_image(prompt, **params)
                             
                             # Mostrar ID de predicción
@@ -1144,6 +1611,7 @@ if st.session_state.current_page == 'generator':
                         
                         elif "Kandinsky" in content_type:
                             st.info(f"🎨 Generando imagen con Kandinsky 2.2... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["kandinsky"]
                             prediction = generate_kandinsky(prompt, **params)
                             
                             # Mostrar ID de predicción
@@ -1234,6 +1702,7 @@ if st.session_state.current_page == 'generator':
                         
                         elif "SSD-1B" in content_type:
                             st.info(f"⚡ Generando imagen rápida con SSD-1B... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["ssd1b"]
                             
                             # SSD-1B usa replicate.run() que devuelve resultados directamente
                             with st.spinner("🚀 Generando imagen rápida..."):
@@ -1312,6 +1781,7 @@ if st.session_state.current_page == 'generator':
                         
                         elif "Seedance" in content_type:
                             st.info(f"💃 Generando con Seedance... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["seedance"]
                             
                             with st.spinner("💃 Procesando con Seedance..."):
                                 try:
@@ -1377,6 +1847,7 @@ if st.session_state.current_page == 'generator':
                         
                         elif "Pixverse" in content_type:
                             st.info(f"🎬 Generando video con Pixverse... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["pixverse"]
                             
                             # Pixverse usa replicate.run() que devuelve resultados directamente
                             with st.spinner("🎬 Generando video con Pixverse..."):
@@ -1485,6 +1956,7 @@ if st.session_state.current_page == 'generator':
                         
                         elif "VEO 3 Fast" in content_type:
                             st.info(f"🚀 Generando video con VEO 3 Fast... Iniciado a las {start_datetime}")
+                            params = st.session_state.model_configs["veo3"]
                             
                             with st.spinner("🚀 Generando video con VEO 3 Fast..."):
                                 try:
@@ -1639,22 +2111,8 @@ if st.session_state.current_page == 'generator':
                         </div>
                         """, unsafe_allow_html=True)
             
-            # Enlaces útiles
-            st.subheader("🔗 Enlaces")
-            st.markdown("[📚 Documentación Flux Pro](https://replicate.com/black-forest-labs/flux-pro)")
-            st.markdown("[🎨 Documentación Kandinsky](https://replicate.com/ai-forever/kandinsky-2.2)")
-            st.markdown("[⚡ Documentación SSD-1B](https://replicate.com/lucataco/realvisxl-v4.0-lightning)")
-            st.markdown("[💃 Documentación Seedance](https://replicate.com/fofr/realvisxl-v4.0)")
-            st.markdown("[🎬 Documentación Pixverse](https://replicate.com/pixverse/pixverse-v1.8)")
-            st.markdown("[🚀 Documentación VEO 3 Fast](https://replicate.com/fofr/veo-3-fast)")
-            
             # Botón de configuración con modal
             st.divider()
-            
-            # Botón de configuración elegante
-            if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación"):
-                st.session_state.show_config_modal = True
-                st.rerun()
 
     # Sección de historial avanzado
     with tab2:
@@ -2444,6 +2902,10 @@ if st.session_state.current_page == 'generator':
     # Verificar si se debe mostrar el modal de configuración (solo en la página del generador)
     if st.session_state.get('show_config_modal', False):
         show_config_modal()
+    
+    # Verificar si se debe mostrar el modal de ajustes de modelos
+    if st.session_state.get('show_model_settings_modal', False) and not st.session_state.get('prevent_auto_modal', False):
+        show_model_settings_modal()
 
 elif st.session_state.current_page == 'biblioteca':
     # PÁGINA DE LA BIBLIOTECA
@@ -2451,13 +2913,6 @@ elif st.session_state.current_page == 'biblioteca':
     # Sidebar con controles para la biblioteca
     with st.sidebar:
         st.header("📚 Biblioteca")
-        st.divider()
-        
-        # Botón de configuración en la biblioteca
-        if st.button("⚙️ Configuración Avanzada", use_container_width=True, help="Opciones de control de la aplicación"):
-            st.session_state.show_config_modal = True
-            st.rerun()
-        
         st.divider()
         
         # Enlaces útiles para la biblioteca
