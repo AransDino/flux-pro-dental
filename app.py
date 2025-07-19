@@ -2159,22 +2159,26 @@ if st.session_state.current_page == 'generator':
             # Mostrar métricas de resumen con diseño visual mejorado
             st.markdown("### 📊 Resumen de Actividad")
             
-            # Primera fila de métricas principales
-            col1, col2 = st.columns(2)
+            # Cards horizontales en una sola fila - más compactas
+            col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 st.markdown(f"""
                 <div style="
                     background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-                    padding: 25px;
-                    border-radius: 15px;
+                    padding: 20px 15px;
+                    border-radius: 12px;
                     text-align: center;
                     color: white;
-                    box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+                    box-shadow: 0 3px 10px rgba(255,107,107,0.3);
+                    height: 120px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                 ">
-                    <div style="font-size: 14px; margin-bottom: 5px;">🖼️ IMÁGENES</div>
-                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_imagenes}</div>
-                    <div style="font-size: 12px; opacity: 0.9;">Generadas</div>
+                    <div style="font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🖼️ IMÁGENES</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">{total_imagenes}</div>
+                    <div style="font-size: 10px; opacity: 0.9;">Generadas</div>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -2183,56 +2187,61 @@ if st.session_state.current_page == 'generator':
                 st.markdown(f"""
                 <div style="
                     background: linear-gradient(135deg, #4ECDC4, #44A08D);
-                    padding: 25px;
-                    border-radius: 15px;
+                    padding: 20px 15px;
+                    border-radius: 12px;
                     text-align: center;
                     color: white;
-                    box-shadow: 0 4px 15px rgba(78,205,196,0.3);
+                    box-shadow: 0 3px 10px rgba(78,205,196,0.3);
+                    height: 120px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                 ">
-                    <div style="font-size: 14px; margin-bottom: 5px;">🎬 VIDEOS</div>
-                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_videos}</div>
-                    <div style="font-size: 12px; opacity: 0.9;">Generados</div>
+                    <div style="font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🎬 VIDEOS</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">{total_videos}</div>
+                    <div style="font-size: 10px; opacity: 0.9;">Generados</div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Segunda fila con costos y total
-            col4, col5 = st.columns(2)
+            with col3:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    padding: 20px 15px;
+                    border-radius: 12px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 3px 10px rgba(102,126,234,0.3);
+                    height: 120px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                ">
+                    <div style="font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">📈 TOTAL</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">{total_items}</div>
+                    <div style="font-size: 10px; opacity: 0.9;">Generaciones</div>
+                </div>
+                """, unsafe_allow_html=True)
             
             with col4:
                 st.markdown(f"""
                 <div style="
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    padding: 25px;
-                    border-radius: 15px;
-                    text-align: center;
-                    color: white;
-                    box-shadow: 0 4px 15px rgba(102,126,234,0.3);
-                ">
-                    <div style="font-size: 14px; margin-bottom: 5px;">📈 TOTAL</div>
-                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">{total_items}</div>
-                    <div style="font-size: 12px; opacity: 0.9;">Generaciones</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col5:
-                st.markdown(f"""
-                <div style="
                     background: linear-gradient(135deg, #f093fb, #f5576c);
-                    padding: 25px;
-                    border-radius: 15px;
+                    padding: 20px 15px;
+                    border-radius: 12px;
                     text-align: center;
                     color: white;
-                    box-shadow: 0 4px 15px rgba(240,147,251,0.3);
+                    box-shadow: 0 3px 10px rgba(240,147,251,0.3);
+                    height: 120px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                 ">
-                    <div style="font-size: 16px; margin-bottom: 5px; font-weight: bold;">💰 COSTO USD</div>
-                    <div style="font-size: 42px; font-weight: bold; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${total_cost_usd:.2f}</div>
-                    <div style="font-size: 14px; opacity: 0.9;">Costo Total Estimado</div>
+                    <div style="font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">💰 COSTO USD</div>
+                    <div style="font-size: 24px; font-weight: bold; margin: 8px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">${total_cost_usd:.2f}</div>
+                    <div style="font-size: 10px; opacity: 0.9;">Costo Total Estimado</div>
                 </div>
                 """, unsafe_allow_html=True)
-            
-            st.markdown("<br><br>", unsafe_allow_html=True)
             
             # Filtros avanzados
             st.subheader("🔍 Filtros")
@@ -2777,22 +2786,42 @@ if st.session_state.current_page == 'generator':
                 if temporal_data:
                     st.markdown(f"**📊 Datos de los últimos períodos ({period}):**")
                     
-                    # Mostrar los últimos 5 períodos
+                    # Mostrar los últimos 5 períodos en cards horizontales más finas
                     for i, (periodo, data) in enumerate(list(temporal_data.items())[:5]):
-                        col_a, col_b, col_c, col_d = st.columns(4)
+                        avg = data['total_cost'] / data['count'] if data['count'] > 0 else 0
                         
-                        with col_a:
-                            st.metric("📅 Período", periodo)
-                        with col_b:
-                            st.metric("💰 Costo", f"${data['total_cost']:.2f}")
-                        with col_c:
-                            st.metric("📊 Generaciones", data['count'])
-                        with col_d:
-                            avg = data['total_cost'] / data['count'] if data['count'] > 0 else 0
-                            st.metric("📈 Promedio", f"${avg:.3f}")
-                        
-                        if i < 4:  # No mostrar divider después del último
-                            st.divider()
+                        # Card horizontal compacta con todas las métricas en una línea
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            padding: 12px 20px;
+                            border-radius: 8px;
+                            margin: 8px 0;
+                            border-left: 4px solid #007bff;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        ">
+                            <div style="display: flex; gap: 30px; align-items: center; width: 100%;">
+                                <div style="text-align: center; min-width: 120px;">
+                                    <div style="font-size: 10px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📅 Período</div>
+                                    <div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 2px;">{periodo}</div>
+                                </div>
+                                <div style="text-align: center; min-width: 100px;">
+                                    <div style="font-size: 10px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">💰 Costo</div>
+                                    <div style="font-size: 16px; font-weight: bold; color: #28a745; margin-top: 2px;">${data['total_cost']:.2f}</div>
+                                </div>
+                                <div style="text-align: center; min-width: 100px;">
+                                    <div style="font-size: 10px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📊 Generaciones</div>
+                                    <div style="font-size: 16px; font-weight: bold; color: #007bff; margin-top: 2px;">{data['count']}</div>
+                                </div>
+                                <div style="text-align: center; min-width: 100px;">
+                                    <div style="font-size: 10px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📈 Promedio</div>
+                                    <div style="font-size: 16px; font-weight: bold; color: #6f42c1; margin-top: 2px;">${avg:.3f}</div>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
                     st.info("No hay datos temporales disponibles")
         
@@ -2862,15 +2891,36 @@ if st.session_state.current_page == 'generator':
                     # Estimar gasto mensual basado en tendencia
                     days_passed = datetime.now().day
                     estimated_monthly = (current_cost / days_passed) * 30 if days_passed > 0 else current_cost
+                    yearly_projection = estimated_monthly * 12
                     
-                    col_proj1, col_proj2, col_proj3 = st.columns(3)
-                    with col_proj1:
-                        st.metric("📅 Mes Actual", f"${current_cost:.2f}")
-                    with col_proj2:
-                        st.metric("📊 Proyección Mensual", f"${estimated_monthly:.2f}")
-                    with col_proj3:
-                        yearly_projection = estimated_monthly * 12
-                        st.metric("📈 Proyección Anual", f"${yearly_projection:.2f}")
+                    # Card horizontal compacta para proyecciones
+                    st.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #e8f5e8 0%, #d4edd4 100%);
+                        padding: 15px 25px;
+                        border-radius: 10px;
+                        margin: 15px 0;
+                        border-left: 4px solid #28a745;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <div style="display: flex; gap: 40px; align-items: center; width: 100%;">
+                            <div style="text-align: center; min-width: 140px;">
+                                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📅 Mes Actual</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #28a745; margin-top: 4px;">${current_cost:.2f}</div>
+                            </div>
+                            <div style="text-align: center; min-width: 140px;">
+                                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📊 Proyección Mensual</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #007bff; margin-top: 4px;">${estimated_monthly:.2f}</div>
+                            </div>
+                            <div style="text-align: center; min-width: 140px;">
+                                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">📈 Proyección Anual</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #dc3545; margin-top: 4px;">${yearly_projection:.2f}</div>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             with efficiency_col2:
                 st.markdown("**💡 Tips de Optimización**")
