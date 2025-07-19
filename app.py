@@ -1111,6 +1111,10 @@ if 'show_model_modal' not in st.session_state:
 if 'content_type' not in st.session_state:
     st.session_state.content_type = '🖼️ Imagen: Flux Pro'
 
+# Inicializar plantilla seleccionada
+if 'selected_template' not in st.session_state:
+    st.session_state.selected_template = None
+
 # Inicializar configuraciones por defecto para cada modelo
 if 'model_configs' not in st.session_state:
     st.session_state.model_configs = {
@@ -1404,6 +1408,14 @@ if st.session_state.current_page == 'generator':
             }
         
         selected_template = st.selectbox("🎨 Plantillas predefinidas:", list(templates.keys()))
+        
+        # Verificar si la plantilla cambió para prevenir apertura automática del modal
+        if st.session_state.get('selected_template') != selected_template:
+            st.session_state.prevent_auto_modal = True
+            st.session_state.show_model_settings_modal = False
+        
+        # Actualizar el estado de sesión
+        st.session_state.selected_template = selected_template
         
         # Área de texto para el prompt
         if selected_template == "✨ Personalizado":
