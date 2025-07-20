@@ -3365,7 +3365,7 @@ elif st.session_state.current_page == 'gallery':
 
     .gallery-item:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2), 0 0 40px rgba(102, 126, 234, 0.5);
     }
 
     .hover-overlay {
@@ -3570,29 +3570,6 @@ elif st.session_state.current_page == 'gallery':
                                 </div>
                                 """, unsafe_allow_html=True)
 
-                                # Botón adicional para modal (opcional)
-                                if st.button(f"ℹ️ Info", key=f"info_{unique_id}", use_container_width=True):
-                                    st.session_state[f'show_modal_{unique_id}'] = True
-
-                                # Modal de información (opcional)
-                                if st.session_state.get(f'show_modal_{unique_id}', False):
-                                    with st.popover("📋 Información de la Imagen", use_container_width=True):
-                                        st.image(item['url'], use_column_width=True)
-                                        st.write(f"**🤖 Modelo:** {item.get('modelo', 'Unknown')}")
-                                        st.write(f"**📅 Fecha:** {item.get('fecha', 'Sin fecha')}")
-
-                                        # Mostrar prompt si existe
-                                        prompt = item.get('prompt', '')
-                                        if prompt:
-                                            st.write(f"**💬 Prompt:** {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
-
-                                        # Mostrar costo
-                                        cost_usd, _, _ = calculate_item_cost(item)  # ✅ Función existente
-                                        st.write(f"**💰 Costo:** ${cost_usd:.3f} USD")
-
-                                        if st.button("✕ Cerrar", key=f"close_modal_{unique_id}"):
-                                            st.session_state[f'show_modal_{unique_id}'] = False
-                                            st.rerun()
 
                 # Información final
                 st.markdown("<br>", unsafe_allow_html=True)
